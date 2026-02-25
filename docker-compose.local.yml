@@ -1,0 +1,31 @@
+# Local Development - PostgreSQL Only
+# Usage: docker compose -f docker-compose.local.yml up -d
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: edufit-db-local
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: edufit_dev
+    volumes:
+      - local-edufit-postgres:/var/lib/postgresql/data
+      - ./database/schema/001_initial_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/seed/001_academies.sql:/docker-entrypoint-initdb.d/02-seed-academies.sql
+      - ./database/seed/002_subjects.sql:/docker-entrypoint-initdb.d/03-seed-subjects.sql
+      - ./database/seed/003_teachers.sql:/docker-entrypoint-initdb.d/04-seed-teachers.sql
+      - ./database/seed/004_collection_sources.sql:/docker-entrypoint-initdb.d/05-seed-sources.sql
+      - ./database/seed/005_analysis_keywords.sql:/docker-entrypoint-initdb.d/06-seed-keywords.sql
+    networks:
+      - local-dev-network
+    restart: unless-stopped
+
+volumes:
+  local-edufit-postgres:
+
+networks:
+  local-dev-network:
+    driver: bridge

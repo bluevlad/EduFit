@@ -1,0 +1,35 @@
+# Production - Full Stack
+# Usage: docker compose -f docker-compose.prod.yml up -d
+
+services:
+  backend:
+    build: ./backend
+    container_name: edufit-backend
+    ports:
+      - "9070:9070"
+    environment:
+      DATABASE_URL: postgresql://edufit_svc:${DB_PASSWORD}@postgresql:5432/edufit
+      CORS_ORIGINS: http://localhost:4070,http://172.30.1.78:4070
+      DEBUG: "false"
+      LOG_LEVEL: INFO
+    networks:
+      - edufit-network
+      - database-network
+    restart: unless-stopped
+    depends_on:
+      - frontend
+
+  frontend:
+    build: ./frontend
+    container_name: edufit-frontend
+    ports:
+      - "4070:4070"
+    networks:
+      - edufit-network
+    restart: unless-stopped
+
+networks:
+  edufit-network:
+    driver: bridge
+  database-network:
+    external: true
