@@ -1,0 +1,81 @@
+"""EduFit API 서버
+
+학원/강사 평판 분석 통합 플랫폼 REST API
+
+실행 방법:
+    cd C:\\GIT\\EduFit\\backend
+    py -m uvicorn app.main:app --port 9070 --reload
+"""
+import logging
+from contextlib import asynccontextmanager
+from datetime import datetime
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+
+from .core.config import settings
+from .core.database import engine
+from .api.v1.routes import api_router
+
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """앱 시작/종료 이벤트"""
+    # Startup
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        logger.info("Database connection verified")
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
+    yield
+    # Shutdown
+    engine.dispose()
+    logger.info("Database connections closed")
+
+
+app = FastAPI(
+    title="EduFit API",
+    description="학원/강사 평판 분석 통합 플랫폼",
+    version=settings.app_version,
+    lifespan=lifespan,
+)
+
+# CORS 설정
+cors_origins = [origin.strip() for origin in settings.cors_origins.split(",")]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# API 라우터 등록
+app.include_router(api_router, prefix=settings.api_v1_prefix)
+
+
+@app.get("/")
+async def root():
+    """API 루트"""
+    return {
+        "name": "EduFit API",
+        "version": settings.app_version,
+        "status": "running",
+        "endpoints": {
+            "docs": "/docs",
+            "academies": f"{settings.api_v1_prefix}/academies",
+            "teachers": f"{settings.api_v1_prefix}/teachers",
+            "subjects": f"{settings.api_v1_prefix}/subjects",
+            "collection_sources": f"{settings.api_v1_prefix}/collection-sources",
+        },
+    }
+
+
+@app.get("/api/health")
+async def health_check():
+    """헬스 체크"""
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
