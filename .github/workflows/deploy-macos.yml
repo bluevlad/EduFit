@@ -126,7 +126,7 @@ jobs:
     - name: Deployment summary
       run: |
         echo "=== EduFit Deployment Complete ==="
-        echo "Frontend: http://***REMOVED***:4070"
+        echo "Frontend: http://localhost:4070"
         echo "Backend:  http://localhost:9070"
         echo ""
         docker compose ps

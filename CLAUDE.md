@@ -89,9 +89,7 @@ EduFit/
 
 ## Deployment
 
-- **CI/CD**: GitHub Actions (macOS Self-hosted Runner, `prod` 브랜치 push 시 자동 배포)
-- **Runner**: `edufit-runner` (~/actions-runner-edufit)
-- **운영 URL**: http://***REMOVED***:4070
+- **CI/CD**: GitHub Actions (Self-hosted Runner, `prod` 브랜치 push 시 자동 배포)
 - **Docker**: OrbStack (edufit-db, edufit-backend, edufit-frontend)
 - **Secrets**: GitHub Secrets로 관리 (DB_USER, DB_PASSWORD, DB_NAME, DB_PORT, CORS_ORIGINS)
 
@@ -108,6 +106,6 @@ git checkout prod && git merge main && git push origin prod
 
 - `.env`, `.env.local`, `.env.production` 파일을 직접 생성하거나 커밋하지 마세요
 - `docker-compose.override.yml`을 커밋하지 마세요
-- 운영 DB(***REMOVED***:5432/edufit)에 직접 DROP/TRUNCATE 실행하지 마세요
+- 운영 DB에 직접 DROP/TRUNCATE 실행하지 마세요
 - 포트 번호(Frontend 4070, Backend 9070)를 임의로 변경하지 마세요
 - `alembic/versions/` 파일을 수동으로 편집하지 마세요

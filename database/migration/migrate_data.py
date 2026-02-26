@@ -16,6 +16,7 @@ TeacherHub(PostgreSQL) + AcademyInsight(MongoDB) → EduFit(PostgreSQL)
 import argparse
 import hashlib
 import logging
+import os
 from datetime import datetime
 from urllib.parse import parse_qs, urlparse
 
@@ -24,30 +25,30 @@ import psycopg2.extras
 from pymongo import MongoClient
 
 # ============================================
-# 접속 정보
+# 접속 정보 (환경변수에서 읽음)
 # ============================================
 TEACHERHUB_PG = {
-    "host": "***REMOVED***",
-    "port": 5432,
-    "dbname": "teacherhub",
-    "user": "postgres",
-    "password": "***REMOVED***",
+    "host": os.environ["TH_PG_HOST"],
+    "port": int(os.environ.get("TH_PG_PORT", "5432")),
+    "dbname": os.environ.get("TH_PG_DBNAME", "teacherhub"),
+    "user": os.environ["TH_PG_USER"],
+    "password": os.environ["TH_PG_PASSWORD"],
 }
 
 ACADEMYINSIGHT_MONGO = {
-    "host": "***REMOVED***",
-    "port": 27017,
-    "dbname": "academyinsight",
-    "user": "admin",
-    "password": "***REMOVED***",
+    "host": os.environ["AI_MONGO_HOST"],
+    "port": int(os.environ.get("AI_MONGO_PORT", "27017")),
+    "dbname": os.environ.get("AI_MONGO_DBNAME", "academyinsight"),
+    "user": os.environ["AI_MONGO_USER"],
+    "password": os.environ["AI_MONGO_PASSWORD"],
 }
 
 EDUFIT_PG = {
-    "host": "localhost",
-    "port": 5433,
-    "dbname": "edufit_dev",
-    "user": "postgres",
-    "password": "postgres",
+    "host": os.environ.get("EF_PG_HOST", "localhost"),
+    "port": int(os.environ.get("EF_PG_PORT", "5433")),
+    "dbname": os.environ.get("EF_PG_DBNAME", "edufit_dev"),
+    "user": os.environ["EF_PG_USER"],
+    "password": os.environ["EF_PG_PASSWORD"],
 }
 
 # ============================================
