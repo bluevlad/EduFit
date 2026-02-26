@@ -1,0 +1,111 @@
+name: Deploy EduFit (macOS)
+
+on:
+  push:
+    branches: [ "prod" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+      - '.github/**/*.md'
+
+jobs:
+  deploy:
+    name: Deploy to OrbStack Docker
+    runs-on: [self-hosted, macos, orbstack]
+
+    env:
+      COMPOSE_FILE: docker-compose.yml
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+      DEBUG: "false"
+      LOG_LEVEL: "INFO"
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create .env file
+      run: |
+        cat > .env << 'ENVEOF'
+        DB_USER=${{ secrets.DB_USER }}
+        DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+        DB_NAME=${{ secrets.DB_NAME }}
+        DB_HOST=db
+        DB_PORT=${{ secrets.DB_PORT }}
+        CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
+        DEBUG=false
+        LOG_LEVEL=INFO
+        ENVEOF
+        # Remove leading whitespace from heredoc
+        sed -i '' 's/^[[:space:]]*//' .env
+      shell: bash
+
+    - name: Stop existing containers (backend/frontend only)
+      run: |
+        docker compose stop frontend backend 2>/dev/null || true
+        docker compose rm -f frontend backend 2>/dev/null || true
+      shell: bash
+
+    - name: Build and start services
+      run: |
+        docker compose up -d --build backend frontend
+      shell: bash
+
+    - name: Wait for backend health check
+      run: |
+        echo "Waiting for backend to be healthy..."
+        for i in $(seq 1 30); do
+          if curl -sf http://localhost:9070/api/health > /dev/null 2>&1; then
+            echo "Backend is healthy!"
+            break
+          fi
+          if [ $i -eq 30 ]; then
+            echo "Backend health check timeout"
+            docker compose logs backend --tail=50
+            exit 1
+          fi
+          sleep 2
+        done
+      shell: bash
+
+    - name: Verify frontend
+      run: |
+        echo "Waiting for frontend..."
+        for i in $(seq 1 15); do
+          if curl -sf http://localhost:4070/ > /dev/null 2>&1; then
+            echo "Frontend is serving!"
+            break
+          fi
+          if [ $i -eq 15 ]; then
+            echo "Frontend verification timeout"
+            docker compose logs frontend --tail=30
+            exit 1
+          fi
+          sleep 2
+        done
+      shell: bash
+
+    - name: Verify API through frontend proxy
+      run: |
+        RESPONSE=$(curl -sf http://localhost:4070/api/v1/teachers/ 2>&1)
+        if [ $? -eq 0 ]; then
+          echo "API proxy verified successfully"
+        else
+          echo "Warning: API proxy check failed"
+          docker compose logs --tail=20
+        fi
+      shell: bash
+
+    - name: Deployment summary
+      run: |
+        echo "=== EduFit Deployment Complete ==="
+        echo "Frontend: http://***REMOVED***:4070"
+        echo "Backend:  http://localhost:9070"
+        echo ""
+        docker compose ps
+      shell: bash
