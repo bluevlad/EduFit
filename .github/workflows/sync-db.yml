@@ -1,0 +1,162 @@
+name: Sync DB (EduFit)
+
+on:
+  workflow_dispatch:
+    inputs:
+      direction:
+        description: '동기화 방향'
+        required: true
+        type: choice
+        options:
+          - prod-to-dev
+          - dev-to-prod
+      tables:
+        description: '대상 테이블 (all 또는 쉼표 구분)'
+        required: true
+        default: 'all'
+        type: string
+
+jobs:
+  sync:
+    name: Sync ${{ inputs.direction }}
+    runs-on: [self-hosted, macos, orbstack]
+
+    env:
+      PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+      SVC_USER: ${{ secrets.DB_USER }}
+      PG_CONTAINER: postgresql
+
+    steps:
+    - name: Validate inputs
+      run: |
+        echo "Direction: ${{ inputs.direction }}"
+        echo "Tables: ${{ inputs.tables }}"
+        if [ "${{ inputs.direction }}" = "dev-to-prod" ]; then
+          echo "⚠️  WARNING: dev-to-prod 동기화입니다. 운영 데이터가 덮어씌워집니다."
+        fi
+      shell: bash
+
+    - name: Set source/target databases
+      id: db
+      run: |
+        if [ "${{ inputs.direction }}" = "prod-to-dev" ]; then
+          echo "source=edufit" >> $GITHUB_OUTPUT
+          echo "target=edufit_dev" >> $GITHUB_OUTPUT
+        else
+          echo "source=edufit_dev" >> $GITHUB_OUTPUT
+          echo "target=edufit" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Ensure PostgreSQL is running
+      run: |
+        if ! docker exec $PG_CONTAINER pg_isready -U postgres > /dev/null 2>&1; then
+          echo "ERROR: Shared PostgreSQL is not running"
+          exit 1
+        fi
+        echo "PostgreSQL is ready"
+      shell: bash
+
+    - name: Determine tables to sync
+      id: tables
+      run: |
+        if [ "${{ inputs.tables }}" = "all" ]; then
+          TABLES=$(docker exec -e PGPASSWORD=$PGPASSWORD $PG_CONTAINER psql -U $SVC_USER -d ${{ steps.db.outputs.source }} -t -A -c "
+            SELECT string_agg(tablename, ',')
+            FROM pg_tables
+            WHERE schemaname = 'public';
+          ")
+        else
+          TABLES="${{ inputs.tables }}"
+        fi
+        echo "tables=$TABLES" >> $GITHUB_OUTPUT
+        echo "Syncing tables: $TABLES"
+      shell: bash
+
+    - name: Dump source data
+      run: |
+        IFS=',' read -ra TABLE_ARRAY <<< "${{ steps.tables.outputs.tables }}"
+        TABLE_ARGS=""
+        for t in "${TABLE_ARRAY[@]}"; do
+          TABLE_ARGS="$TABLE_ARGS -t $t"
+        done
+
+        docker exec -e PGPASSWORD=$PGPASSWORD $PG_CONTAINER \
+          pg_dump -U $SVC_USER -d ${{ steps.db.outputs.source }} \
+          --data-only --disable-triggers $TABLE_ARGS \
+          > /tmp/edufit_sync_dump.sql
+
+        echo "Dump size: $(wc -l < /tmp/edufit_sync_dump.sql) lines"
+      shell: bash
+
+    - name: Truncate target tables
+      run: |
+        IFS=',' read -ra TABLE_ARRAY <<< "${{ steps.tables.outputs.tables }}"
+        TRUNCATE_SQL=""
+        for t in "${TABLE_ARRAY[@]}"; do
+          TRUNCATE_SQL="$TRUNCATE_SQL TRUNCATE $t CASCADE;"
+        done
+
+        docker exec -e PGPASSWORD=$PGPASSWORD $PG_CONTAINER \
+          psql -U $SVC_USER -d ${{ steps.db.outputs.target }} \
+          -c "$TRUNCATE_SQL"
+      shell: bash
+
+    - name: Import data to target
+      run: |
+        cat /tmp/edufit_sync_dump.sql | \
+          docker exec -i -e PGPASSWORD=$PGPASSWORD $PG_CONTAINER \
+          psql -U $SVC_USER -d ${{ steps.db.outputs.target }}
+      shell: bash
+
+    - name: Reset sequences
+      run: |
+        docker exec -e PGPASSWORD=$PGPASSWORD $PG_CONTAINER \
+          psql -U $SVC_USER -d ${{ steps.db.outputs.target }} -c "
+            DO \$\$
+            DECLARE
+              r RECORD;
+            BEGIN
+              FOR r IN
+                SELECT c.relname AS seq_name,
+                       t.relname AS table_name,
+                       a.attname AS column_name
+                FROM pg_class c
+                JOIN pg_depend d ON d.objid = c.oid
+                JOIN pg_class t ON t.oid = d.refobjid
+                JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = d.refobjsubid
+                WHERE c.relkind = 'S'
+                  AND t.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+              LOOP
+                EXECUTE format(
+                  'SELECT setval(%L, COALESCE((SELECT MAX(%I) FROM %I), 1))',
+                  r.seq_name, r.column_name, r.table_name
+                );
+              END LOOP;
+            END \$\$;
+          "
+        echo "Sequences reset complete"
+      shell: bash
+
+    - name: Verify sync
+      run: |
+        echo "=== Source (${{ steps.db.outputs.source }}) ==="
+        docker exec -e PGPASSWORD=$PGPASSWORD $PG_CONTAINER \
+          psql -U $SVC_USER -d ${{ steps.db.outputs.source }} -c "
+            SELECT schemaname, relname, n_live_tup
+            FROM pg_stat_user_tables
+            ORDER BY relname;"
+
+        echo ""
+        echo "=== Target (${{ steps.db.outputs.target }}) ==="
+        docker exec -e PGPASSWORD=$PGPASSWORD $PG_CONTAINER \
+          psql -U $SVC_USER -d ${{ steps.db.outputs.target }} -c "
+            SELECT schemaname, relname, n_live_tup
+            FROM pg_stat_user_tables
+            ORDER BY relname;"
+      shell: bash
+
+    - name: Cleanup
+      if: always()
+      run: rm -f /tmp/edufit_sync_dump.sql
+      shell: bash

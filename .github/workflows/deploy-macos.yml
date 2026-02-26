@@ -16,10 +16,11 @@ jobs:
     runs-on: [self-hosted, macos, orbstack]
 
     env:
-      COMPOSE_FILE: docker-compose.yml
+      COMPOSE_FILE: docker-compose.prod.yml
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_NAME: ${{ secrets.DB_NAME }}
+      DB_HOST: ${{ secrets.DB_HOST }}
       DB_PORT: ${{ secrets.DB_PORT }}
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
       DEBUG: "false"
@@ -35,7 +36,7 @@ jobs:
         DB_USER=${{ secrets.DB_USER }}
         DB_PASSWORD=${{ secrets.DB_PASSWORD }}
         DB_NAME=${{ secrets.DB_NAME }}
-        DB_HOST=db
+        DB_HOST=${{ secrets.DB_HOST }}
         DB_PORT=${{ secrets.DB_PORT }}
         CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
         DEBUG=false
@@ -51,22 +52,20 @@ jobs:
         docker compose rm -f frontend backend 2>/dev/null || true
       shell: bash
 
-    - name: Ensure DB is running
+    - name: Ensure shared PostgreSQL is running
       run: |
-        docker compose up -d db
-        echo "Waiting for DB..."
+        echo "Checking shared PostgreSQL..."
         for i in $(seq 1 15); do
-          if docker exec edufit-db pg_isready -U postgres > /dev/null 2>&1; then
-            echo "DB is ready"
+          if docker exec postgresql pg_isready -U postgres > /dev/null 2>&1; then
+            echo "Shared PostgreSQL is ready"
             break
+          fi
+          if [ $i -eq 15 ]; then
+            echo "ERROR: Shared PostgreSQL is not running"
+            exit 1
           fi
           sleep 2
         done
-      shell: bash
-
-    - name: Sync DB password
-      run: |
-        docker exec edufit-db psql -U postgres -c "ALTER USER ${{ secrets.DB_USER }} PASSWORD '${{ secrets.DB_PASSWORD }}';" 2>/dev/null || true
       shell: bash
 
     - name: Build and start services
