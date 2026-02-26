@@ -71,6 +71,9 @@ async def root():
             "teachers": f"{settings.api_v1_prefix}/teachers",
             "subjects": f"{settings.api_v1_prefix}/subjects",
             "collection_sources": f"{settings.api_v1_prefix}/collection-sources",
+            "reports": f"{settings.api_v1_prefix}/reports",
+            "analysis": f"{settings.api_v1_prefix}/analysis",
+            "weekly": f"{settings.api_v1_prefix}/weekly",
         },
     }
 

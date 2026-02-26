@@ -1,0 +1,80 @@
+# EduFit - Full Stack Docker Compose
+# Usage: docker compose up -d
+# DB + Backend + Frontend 통합 실행
+# 보안 정보는 .env 파일에서 관리 (.env.example 참조)
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: edufit-db
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_DB: ${DB_NAME:-edufit_dev}
+    volumes:
+      - edufit-postgres:/var/lib/postgresql/data
+      - ./database/schema/001_initial_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/seed/001_academies.sql:/docker-entrypoint-initdb.d/02-seed-academies.sql
+      - ./database/seed/002_subjects.sql:/docker-entrypoint-initdb.d/03-seed-subjects.sql
+      - ./database/seed/003_teachers.sql:/docker-entrypoint-initdb.d/04-seed-teachers.sql
+      - ./database/seed/004_collection_sources.sql:/docker-entrypoint-initdb.d/05-seed-sources.sql
+      - ./database/seed/005_analysis_keywords.sql:/docker-entrypoint-initdb.d/06-seed-keywords.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-edufit_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - edufit-network
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: edufit-backend
+    ports:
+      - "9070:9070"
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:?DB_PASSWORD is required}@db:5432/${DB_NAME:-edufit_dev}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4070}
+      DEBUG: ${DEBUG:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9070/api/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - edufit-network
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: edufit-frontend
+    ports:
+      - "4070:4070"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4070/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - edufit-network
+    restart: unless-stopped
+
+volumes:
+  edufit-postgres:
+
+networks:
+  edufit-network:
+    driver: bridge

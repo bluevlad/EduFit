@@ -1,16 +1,17 @@
 # Local Development - PostgreSQL Only
 # Usage: docker compose -f docker-compose.local.yml up -d
+# 보안 정보는 .env 파일에서 관리 (.env.example 참조)
 
 services:
   db:
     image: postgres:15-alpine
     container_name: edufit-db-local
     ports:
-      - "5433:5432"
+      - "${DB_PORT:-5433}:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: edufit_dev
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_DB: ${DB_NAME:-edufit_dev}
     volumes:
       - local-edufit-postgres:/var/lib/postgresql/data
       - ./database/schema/001_initial_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql

@@ -1,166 +1,238 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Button,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Stack,
+  Container, Grid, Paper, Typography, Box, Card, CardContent, CardActionArea,
+  CircularProgress, Alert, Avatar, Chip, Divider,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+import SchoolIcon from '@mui/icons-material/School';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import academyService from '../services/academyService';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import analysisService from '../services/analysisService';
+
+const AcademyCard = ({ academy, stats, onClick }) => {
+  const getSentimentIcon = () => {
+    if (!stats?.avgSentimentScore) return null;
+    return stats.avgSentimentScore > 0 ? (
+      <TrendingUpIcon color="success" />
+    ) : (
+      <TrendingDownIcon color="error" />
+    );
+  };
+
+  return (
+    <Card sx={{ height: '100%' }}>
+      <CardActionArea onClick={onClick} sx={{ height: '100%' }}>
+        <CardContent>
+          <Box display="flex" alignItems="center" gap={2} mb={2}>
+            <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
+              <SchoolIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h6" fontWeight="bold">
+                {academy.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                코드: {academy.code}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          {stats ? (
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">오늘 언급</Typography>
+                <Typography variant="h5">{stats.totalMentions || 0}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">언급된 강사</Typography>
+                <Typography variant="h5">{stats.totalTeachersMentioned || 0}명</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Typography variant="body2" color="text.secondary">평균 감성:</Typography>
+                  {getSentimentIcon()}
+                  <Typography
+                    color={stats.avgSentimentScore > 0 ? 'success.main' : 'error.main'}
+                  >
+                    {stats.avgSentimentScore
+                      ? `${(stats.avgSentimentScore * 100).toFixed(0)}%`
+                      : '-'}
+                  </Typography>
+                </Box>
+              </Grid>
+              {stats.topTeacherName && (
+                <Grid item xs={12}>
+                  <Chip
+                    size="small"
+                    icon={<ThumbUpIcon />}
+                    label={`TOP: ${stats.topTeacherName}`}
+                    color="primary"
+                    variant="outlined"
+                  />
+                </Grid>
+              )}
+            </Grid>
+          ) : (
+            <Typography color="text.secondary" align="center">
+              통계 데이터 없음
+            </Typography>
+          )}
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  );
+};
+
+const AcademyTeachersTable = ({ teachers, loading: teachersLoading }) => {
+  if (teachersLoading) return <CircularProgress />;
+
+  if (!teachers || teachers.length === 0) {
+    return (
+      <Typography color="text.secondary" align="center" py={3}>
+        강사 데이터가 없습니다.
+      </Typography>
+    );
+  }
+
+  return (
+    <TableContainer>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>강사명</TableCell>
+            <TableCell>과목</TableCell>
+            <TableCell align="right">언급</TableCell>
+            <TableCell align="right">긍정</TableCell>
+            <TableCell align="right">부정</TableCell>
+            <TableCell align="right">추천</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {teachers.map((teacher) => (
+            <TableRow key={teacher.id} hover>
+              <TableCell>{teacher.name}</TableCell>
+              <TableCell>{teacher.subject_name || '-'}</TableCell>
+              <TableCell align="right">{teacher.mentionCount || 0}</TableCell>
+              <TableCell align="right">{teacher.positiveCount || 0}</TableCell>
+              <TableCell align="right">{teacher.negativeCount || 0}</TableCell>
+              <TableCell align="right">{teacher.recommendationCount || 0}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+};
 
 function AcademyListPage() {
-  const navigate = useNavigate();
-  const [academies, setAcademies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [newAcademy, setNewAcademy] = useState({ name: '', code: '', website: '' });
+  const [error, setError] = useState(null);
+  const [academies, setAcademies] = useState([]);
+  const [academyStats, setAcademyStats] = useState({});
+  const [selectedAcademy, setSelectedAcademy] = useState(null);
+  const [academyTeachers, setAcademyTeachers] = useState([]);
+  const [teachersLoading, setTeachersLoading] = useState(false);
 
-  const fetchAcademies = async () => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      const res = await academyService.getAll();
-      setAcademies(res.data);
+      const [academiesRes, statsRes] = await Promise.all([
+        academyService.getAll(),
+        analysisService.getAcademyStats().catch(() => ({ data: [] })),
+      ]);
+
+      setAcademies(academiesRes.data || []);
+
+      const statsMap = {};
+      (statsRes.data || []).forEach((stat) => {
+        statsMap[stat.academyId] = stat;
+      });
+      setAcademyStats(statsMap);
     } catch (err) {
       console.error('Failed to fetch academies:', err);
+      setError('학원 정보를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchAcademies();
-  }, []);
+  const handleAcademyClick = async (academy) => {
+    if (selectedAcademy?.id === academy.id) {
+      setSelectedAcademy(null);
+      return;
+    }
 
-  const handleCreate = async () => {
+    setSelectedAcademy(academy);
+    setTeachersLoading(true);
+
     try {
-      await academyService.create(newAcademy);
-      setDialogOpen(false);
-      setNewAcademy({ name: '', code: '', website: '' });
-      fetchAcademies();
+      const response = await academyService.getTeachers(academy.id);
+      setAcademyTeachers(response.data || []);
     } catch (err) {
-      console.error('Failed to create academy:', err);
+      console.error('Failed to fetch academy teachers:', err);
+    } finally {
+      setTeachersLoading(false);
     }
   };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('정말 삭제하시겠습니까?')) return;
-    try {
-      await academyService.delete(id);
-      fetchAcademies();
-    } catch (err) {
-      console.error('Failed to delete academy:', err);
-    }
-  };
-
-  if (loading) return <LoadingSpinner />;
 
   return (
-    <>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Academies</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
-          Add Academy
-        </Button>
-      </Stack>
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <Box mb={4}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          학원별 통계
+        </Typography>
+        <Typography variant="subtitle1" color="text.secondary">
+          학원 {academies.length}개
+        </Typography>
+      </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Code</TableCell>
-              <TableCell>Website</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
+      )}
+
+      {loading ? (
+        <Box display="flex" justifyContent="center" py={5}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          <Grid container spacing={3} mb={4}>
             {academies.map((academy) => (
-              <TableRow
-                key={academy.id}
-                hover
-                sx={{ cursor: 'pointer' }}
-                onClick={() => navigate(`/academies/${academy.id}`)}
-              >
-                <TableCell>{academy.id}</TableCell>
-                <TableCell>{academy.name}</TableCell>
-                <TableCell>{academy.code}</TableCell>
-                <TableCell>{academy.website}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={academy.is_active ? 'Active' : 'Inactive'}
-                    color={academy.is_active ? 'success' : 'default'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(academy.id);
-                    }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
+              <Grid item xs={12} sm={6} md={3} key={academy.id}>
+                <AcademyCard
+                  academy={academy}
+                  stats={academyStats[academy.id]}
+                  onClick={() => handleAcademyClick(academy)}
+                />
+              </Grid>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </Grid>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-        <DialogTitle>Add Academy</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Name"
-            fullWidth
-            value={newAcademy.name}
-            onChange={(e) => setNewAcademy({ ...newAcademy, name: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Code"
-            fullWidth
-            value={newAcademy.code}
-            onChange={(e) => setNewAcademy({ ...newAcademy, code: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Website"
-            fullWidth
-            value={newAcademy.website}
-            onChange={(e) => setNewAcademy({ ...newAcademy, website: e.target.value })}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleCreate} variant="contained">
-            Create
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+          {selectedAcademy && (
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                {selectedAcademy.name} 강사 현황
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <AcademyTeachersTable
+                teachers={academyTeachers}
+                loading={teachersLoading}
+              />
+            </Paper>
+          )}
+        </>
+      )}
+    </Container>
   );
 }
 

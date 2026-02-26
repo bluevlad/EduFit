@@ -24,11 +24,11 @@ yarn-error.log*
 frontend/dist/
 frontend/build/
 
-# Environment
+# Environment (보안 정보 - 절대 커밋 금지)
 .env
-.env.local
-.env.production
-.env.*.local
+.env.*
+!.env.example
+!.env*.example
 
 # IDE
 .vscode/

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from ....core.database import get_db
 from ....schemas.teacher import TeacherCreate, TeacherUpdate, TeacherResponse
-from ....services import teacher_service
+from ....services import teacher_service, analysis_service
 
 router = APIRouter(prefix="/teachers", tags=["Teachers"])
 
@@ -56,6 +56,32 @@ def get_teacher(teacher_id: int, db: Session = Depends(get_db)):
     if not teacher:
         raise HTTPException(status_code=404, detail="강사를 찾을 수 없습니다.")
     return _to_response(teacher)
+
+
+@router.get("/{teacher_id}/mentions")
+def get_teacher_mentions(
+    teacher_id: int,
+    limit: int = Query(10, ge=1, le=100, description="최대 결과 수"),
+    db: Session = Depends(get_db),
+):
+    """강사별 최근 멘션"""
+    teacher = teacher_service.get_by_id(db, teacher_id)
+    if not teacher:
+        raise HTTPException(status_code=404, detail="강사를 찾을 수 없습니다.")
+    return analysis_service.get_teacher_mentions(db, teacher_id=teacher_id, limit=limit)
+
+
+@router.get("/{teacher_id}/reports")
+def get_teacher_reports(
+    teacher_id: int,
+    days: int = Query(7, ge=1, le=90, description="최근 N일"),
+    db: Session = Depends(get_db),
+):
+    """강사별 리포트 이력"""
+    teacher = teacher_service.get_by_id(db, teacher_id)
+    if not teacher:
+        raise HTTPException(status_code=404, detail="강사를 찾을 수 없습니다.")
+    return analysis_service.get_teacher_reports(db, teacher_id=teacher_id, days=days)
 
 
 @router.post("", response_model=TeacherResponse, status_code=201)
