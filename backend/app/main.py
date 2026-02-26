@@ -81,4 +81,4 @@ async def root():
 @app.get("/api/health")
 async def health_check():
     """헬스 체크"""
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+    return {"status": "healthy", "service": "EduFit", "timestamp": datetime.now().isoformat()}
