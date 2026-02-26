@@ -87,6 +87,23 @@ EduFit/
 - 응답 형식: `{ success: bool, data: any, error: str | null }`
 - 페이지네이션: `skip` / `limit` 파라미터
 
+## Deployment
+
+- **CI/CD**: GitHub Actions (macOS Self-hosted Runner, `prod` 브랜치 push 시 자동 배포)
+- **Runner**: `edufit-runner` (~/actions-runner-edufit)
+- **운영 URL**: http://***REMOVED***:4070
+- **Docker**: OrbStack (edufit-db, edufit-backend, edufit-frontend)
+- **Secrets**: GitHub Secrets로 관리 (DB_USER, DB_PASSWORD, DB_NAME, DB_PORT, CORS_ORIGINS)
+
+### 배포 프로세스
+
+```bash
+# main → prod 머지로 자동 배포
+git checkout prod && git merge main && git push origin prod
+```
+
+> 로컬 환경 정보는 `CLAUDE.local.md` 참조 (git에 포함되지 않음)
+
 ## Do NOT
 
 - `.env`, `.env.local`, `.env.production` 파일을 직접 생성하거나 커밋하지 마세요
