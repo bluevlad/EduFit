@@ -51,6 +51,24 @@ jobs:
         docker compose rm -f frontend backend 2>/dev/null || true
       shell: bash
 
+    - name: Ensure DB is running
+      run: |
+        docker compose up -d db
+        echo "Waiting for DB..."
+        for i in $(seq 1 15); do
+          if docker exec edufit-db pg_isready -U postgres > /dev/null 2>&1; then
+            echo "DB is ready"
+            break
+          fi
+          sleep 2
+        done
+      shell: bash
+
+    - name: Sync DB password
+      run: |
+        docker exec edufit-db psql -U postgres -c "ALTER USER ${{ secrets.DB_USER }} PASSWORD '${{ secrets.DB_PASSWORD }}';" 2>/dev/null || true
+      shell: bash
+
     - name: Build and start services
       run: |
         docker compose up -d --build backend frontend
