@@ -15,5 +15,4 @@ Claude-Opus-bluevlad/services/edufit/
 └── dev/                # 개발 환경 설정 가이드
 ```
 
-- **운영 PC**: `/Users/rainend/GIT/Claude-Opus-bluevlad/services/edufit/`
-- **개발 PC**: `C:/GIT/Claude-Opus-bluevlad/services/edufit/`
+자세한 문서는 별도 문서 저장소(`Claude-Opus-bluevlad`)를 참조하세요.
