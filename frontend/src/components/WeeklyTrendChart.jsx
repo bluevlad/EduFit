@@ -35,7 +35,7 @@ export const MentionTrendChart = ({ data, title = '주간 언급 트렌드' }) =
   }
 
   const chartData = {
-    labels: data.map((d) => d.weekLabel || `W${d.weekNumber}`),
+    labels: data.map((d) => d.weekLabel || `${d.weekNumber}주`),
     datasets: [
       {
         label: '언급 수',
@@ -84,7 +84,7 @@ export const SentimentTrendChart = ({ data, title = '주간 감성 트렌드' })
   }
 
   const chartData = {
-    labels: data.map((d) => d.weekLabel || `W${d.weekNumber}`),
+    labels: data.map((d) => d.weekLabel || `${d.weekNumber}주`),
     datasets: [
       {
         label: '긍정',

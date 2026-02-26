@@ -23,6 +23,21 @@ const getISOWeek = (date) => {
   return { year: d.getFullYear(), week: weekNumber };
 };
 
+const getMonthWeekLabel = (year, isoWeek) => {
+  const jan4 = new Date(year, 0, 4);
+  const dayOfWeek = jan4.getDay() || 7;
+  const startOfWeek1 = new Date(jan4);
+  startOfWeek1.setDate(jan4.getDate() - (dayOfWeek - 1));
+  const thursday = new Date(startOfWeek1);
+  thursday.setDate(startOfWeek1.getDate() + (isoWeek - 1) * 7 + 3);
+  const month = thursday.getMonth() + 1;
+  const targetYear = thursday.getFullYear();
+  const firstOfMonth = new Date(targetYear, thursday.getMonth(), 1);
+  const mondayWeekday = firstOfMonth.getDay() === 0 ? 6 : firstOfMonth.getDay() - 1;
+  const weekOfMonth = Math.floor((thursday.getDate() - 1 + mondayWeekday) / 7) + 1;
+  return `${targetYear}년 ${month}월 ${weekOfMonth}주차`;
+};
+
 const SummaryCard = ({ title, value, icon, change, color = 'primary' }) => (
   <Card>
     <CardContent>
@@ -273,7 +288,7 @@ function WeeklyReportsPage() {
           </IconButton>
           <Paper sx={{ px: 3, py: 1 }}>
             <Typography variant="h6">
-              {selectedWeek.year}년 {selectedWeek.week}주차
+              {getMonthWeekLabel(selectedWeek.year, selectedWeek.week)}
               {isCurrentWeek() && (
                 <Chip label="현재" size="small" color="primary" sx={{ ml: 1 }} />
               )}
@@ -344,7 +359,7 @@ function WeeklyReportsPage() {
 
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom>
-          {selectedWeek.year}년 {selectedWeek.week}주차 강사 랭킹
+          {getMonthWeekLabel(selectedWeek.year, selectedWeek.week)} 강사 랭킹
         </Typography>
         <Divider sx={{ mb: 2 }} />
         <WeeklyRankingTable reports={reports} loading={loading} />

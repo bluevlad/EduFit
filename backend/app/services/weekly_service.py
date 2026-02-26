@@ -11,6 +11,17 @@ from ..models.academy import Academy
 from ..models.subject import Subject
 
 
+def _iso_week_to_short_label(year: int, week: int) -> str:
+    """ISO 주차를 'M월N주' 형식으로 변환 (차트용 짧은 라벨)"""
+    jan4 = date(year, 1, 4)
+    start_of_week1 = jan4 - timedelta(days=jan4.isoweekday() - 1)
+    thursday = start_of_week1 + timedelta(weeks=week - 1, days=3)
+    month = thursday.month
+    first_of_month = date(thursday.year, month, 1)
+    week_of_month = ((thursday.day - 1 + first_of_month.weekday()) // 7) + 1
+    return f"{month}월{week_of_month}주"
+
+
 def _get_week_range(year: int, week: int):
     """ISO 주차의 시작/종료일 계산"""
     jan4 = date(year, 1, 4)
@@ -179,7 +190,7 @@ def get_teacher_trend(db: Session, teacher_id: int, weeks: int = 8):
         result.append({
             "year": target_year,
             "weekNumber": target_week,
-            "weekLabel": f"W{target_week}",
+            "weekLabel": _iso_week_to_short_label(target_year, target_week),
             "mentionCount": int(row.mention_count or 0) if row else 0,
             "positiveCount": int(row.positive_count or 0) if row else 0,
             "negativeCount": int(row.negative_count or 0) if row else 0,

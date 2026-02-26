@@ -11,6 +11,18 @@ from ..models.academy import Academy
 from ..models.subject import Subject
 
 
+def _iso_week_to_month_label(year: int, week: int) -> str:
+    """ISO 주차를 'YYYY년 M월 N주차' 형식으로 변환 (예: 2026년 6주차 → 2026년 2월 2주차)"""
+    jan4 = date(year, 1, 4)
+    start_of_week1 = jan4 - timedelta(days=jan4.isoweekday() - 1)
+    thursday = start_of_week1 + timedelta(weeks=week - 1, days=3)
+    month = thursday.month
+    first_of_month = date(thursday.year, month, 1)
+    # Monday=0 기준 weekday offset
+    week_of_month = ((thursday.day - 1 + first_of_month.weekday()) // 7) + 1
+    return f"{thursday.year}년 {month}월 {week_of_month}주차"
+
+
 def _build_teacher_summary(report, teacher, academy, subject):
     """DailyReport + Teacher 조인 결과를 TeacherReportSummary dict로 변환"""
     return {
@@ -133,7 +145,7 @@ def get_weekly(db: Session, year: int, week: int):
             "summary": None,
         })
 
-    label = f"{year}년 {week}주차"
+    label = _iso_week_to_month_label(year, week)
     return _build_period_response("weekly", label, str(week_start), str(week_end), summaries)
 
 
@@ -220,7 +232,7 @@ def get_periods(db: Session):
             weekly_set[wk_key] = {
                 "year": iso[0],
                 "week": iso[1],
-                "label": f"{iso[0]}년 {iso[1]}주차",
+                "label": _iso_week_to_month_label(iso[0], iso[1]),
             }
 
         mk_key = (d.year, d.month)

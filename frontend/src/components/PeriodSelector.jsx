@@ -8,6 +8,21 @@ import DateRangeIcon from '@mui/icons-material/DateRange';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import reportService from '../services/reportService';
 
+const getMonthWeekLabel = (year, isoWeek) => {
+  const jan4 = new Date(year, 0, 4);
+  const dayOfWeek = jan4.getDay() || 7;
+  const startOfWeek1 = new Date(jan4);
+  startOfWeek1.setDate(jan4.getDate() - (dayOfWeek - 1));
+  const thursday = new Date(startOfWeek1);
+  thursday.setDate(startOfWeek1.getDate() + (isoWeek - 1) * 7 + 3);
+  const month = thursday.getMonth() + 1;
+  const targetYear = thursday.getFullYear();
+  const firstOfMonth = new Date(targetYear, thursday.getMonth(), 1);
+  const mondayWeekday = firstOfMonth.getDay() === 0 ? 6 : firstOfMonth.getDay() - 1;
+  const weekOfMonth = Math.floor((thursday.getDate() - 1 + mondayWeekday) / 7) + 1;
+  return `${targetYear}년 ${month}월 ${weekOfMonth}주차`;
+};
+
 function PeriodSelector({ onPeriodChange, initialPeriodType = 'daily' }) {
   const [periodType, setPeriodType] = useState(initialPeriodType);
   const [periods, setPeriods] = useState(null);
@@ -73,7 +88,7 @@ function PeriodSelector({ onPeriodChange, initialPeriodType = 'daily' }) {
           params.year = year;
           params.week = week;
           const selected = periods.weekly?.find((w) => w.year === year && w.week === week);
-          params.label = selected?.label || `${year}년 ${week}주차`;
+          params.label = selected?.label || getMonthWeekLabel(year, week);
         }
         break;
       case 'monthly':
