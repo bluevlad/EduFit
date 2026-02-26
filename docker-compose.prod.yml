@@ -29,6 +29,27 @@ services:
       - edufit-network
     restart: unless-stopped
 
+  ai-crawler:
+    build: ./ai-crawler
+    container_name: edufit-ai-crawler
+    environment:
+      DB_HOST: ${DB_HOST:-postgresql}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-edufit_svc}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_NAME: ${DB_NAME:-edufit}
+      APP_MODE: full
+      NAVER_ID: ${NAVER_ID:-}
+      NAVER_PW: ${NAVER_PW:-}
+      CRAWL_LIMIT: ${CRAWL_LIMIT:-50}
+      TZ: Asia/Seoul
+    networks:
+      - edufit-network
+      - database-network
+    restart: always
+    depends_on:
+      - backend
+
 networks:
   edufit-network:
     driver: bridge

@@ -23,6 +23,8 @@ jobs:
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_PORT: ${{ secrets.DB_PORT }}
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+      NAVER_ID: ${{ secrets.NAVER_ID }}
+      NAVER_PW: ${{ secrets.NAVER_PW }}
       DEBUG: "false"
       LOG_LEVEL: "INFO"
 
@@ -39,6 +41,9 @@ jobs:
         DB_HOST=${{ secrets.DB_HOST }}
         DB_PORT=${{ secrets.DB_PORT }}
         CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
+        NAVER_ID=${{ secrets.NAVER_ID }}
+        NAVER_PW=${{ secrets.NAVER_PW }}
+        CRAWL_LIMIT=50
         DEBUG=false
         LOG_LEVEL=INFO
         ENVEOF
@@ -46,10 +51,10 @@ jobs:
         sed -i '' 's/^[[:space:]]*//' .env
       shell: bash
 
-    - name: Stop existing containers (backend/frontend only)
+    - name: Stop existing containers
       run: |
-        docker compose stop frontend backend 2>/dev/null || true
-        docker compose rm -f frontend backend 2>/dev/null || true
+        docker compose stop ai-crawler frontend backend 2>/dev/null || true
+        docker compose rm -f ai-crawler frontend backend 2>/dev/null || true
       shell: bash
 
     - name: Ensure shared PostgreSQL is running
@@ -70,7 +75,7 @@ jobs:
 
     - name: Build and start services
       run: |
-        docker compose up -d --build backend frontend
+        docker compose up -d --build backend frontend ai-crawler
       shell: bash
 
     - name: Wait for backend health check
