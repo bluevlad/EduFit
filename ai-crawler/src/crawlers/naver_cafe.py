@@ -265,9 +265,23 @@ class NaverCafeCrawler(BaseCrawler):
             # 데스크톱 URL로 변환 (m.cafe → cafe)
             desktop_url = url.replace("m.cafe.naver.com", "cafe.naver.com")
             await self.safe_goto(desktop_url)
-            await self.page.wait_for_timeout(1500)
 
-            html = await self.page.content()
+            # 네이버 카페는 #cafe_main iframe 안에 본문이 있음
+            html = None
+            try:
+                iframe_element = await self.page.wait_for_selector("#cafe_main", timeout=5000)
+                frame = await iframe_element.content_frame()
+                if frame:
+                    await frame.wait_for_load_state("domcontentloaded")
+                    html = await frame.content()
+                else:
+                    logger.warning(f"iframe #cafe_main found but no content_frame: {url}")
+            except Exception as e:
+                logger.debug(f"iframe access failed, using outer frame: {e}")
+
+            if not html:
+                html = await self.page.content()
+
             soup = BeautifulSoup(html, 'html.parser')
 
             # 본문 추출 (데스크톱 + 모바일 셀렉터 모두 시도)
@@ -280,6 +294,9 @@ class NaverCafeCrawler(BaseCrawler):
                 if elem:
                     result['content'] = elem.get_text(strip=True)
                     break
+
+            if not result['content']:
+                logger.warning(f"Empty content after detail crawl: {url}")
 
             # 작성자 (데스크톱 셀렉터)
             author_selectors = [

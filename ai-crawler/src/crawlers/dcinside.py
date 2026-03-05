@@ -257,7 +257,12 @@ class DCInsideCrawler(BaseCrawler):
 
         try:
             await self.safe_goto(url)
-            await self.page.wait_for_timeout(1500)
+
+            # 본문 셀렉터가 렌더링될 때까지 대기
+            try:
+                await self.page.wait_for_selector(".write_div", timeout=5000)
+            except Exception:
+                logger.warning(f"Content selector .write_div not found: {url}")
 
             html = await self.page.content()
             soup = BeautifulSoup(html, 'html.parser')
@@ -269,6 +274,9 @@ class DCInsideCrawler(BaseCrawler):
                 for tag in content_elem.select('img, video, iframe, script, style'):
                     tag.decompose()
                 result['content'] = content_elem.get_text(strip=True)
+
+            if not result['content']:
+                logger.warning(f"Empty content after detail crawl: {url}")
 
             # 댓글 추출
             comments = []

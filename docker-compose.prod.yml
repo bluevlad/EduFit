@@ -16,7 +16,7 @@ services:
     networks:
       - edufit-network
       - database-network
-    restart: unless-stopped
+    restart: always
     depends_on:
       - frontend
 
@@ -27,7 +27,7 @@ services:
       - "4070:4070"
     networks:
       - edufit-network
-    restart: unless-stopped
+    restart: always
 
   ai-crawler:
     build: ./ai-crawler

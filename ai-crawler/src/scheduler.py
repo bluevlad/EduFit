@@ -120,6 +120,19 @@ class TaskScheduler:
                 f"{total_posts} posts, {total_mentions} mentions"
             )
 
+            # 크롤링 완료 후 멘션이 있으면 당일 리포트 갱신
+            if total_mentions > 0:
+                try:
+                    generator = ReportGenerator(db)
+                    stats = generator.generate_all_reports()
+                    logger.info(
+                        f"Post-crawl report update: "
+                        f"{stats['teacher_reports']} teacher reports, "
+                        f"{stats['academy_stats']} academy stats"
+                    )
+                except Exception as e:
+                    logger.error(f"Post-crawl report generation error: {e}")
+
         except Exception as e:
             logger.error(f"Crawl error: {e}")
         finally:
