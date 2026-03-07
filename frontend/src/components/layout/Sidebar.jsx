@@ -16,6 +16,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import PersonIcon from '@mui/icons-material/Person';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import DateRangeIcon from '@mui/icons-material/DateRange';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 const mainMenuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
@@ -26,6 +27,7 @@ const mainMenuItems = [
 const reportMenuItems = [
   { text: 'Daily Reports', icon: <AssessmentIcon />, path: '/reports' },
   { text: 'Weekly Reports', icon: <DateRangeIcon />, path: '/weekly' },
+  { text: 'Monthly Reports', icon: <CalendarMonthIcon />, path: '/monthly' },
 ];
 
 function Sidebar({ open, drawerWidth }) {

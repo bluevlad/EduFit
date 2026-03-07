@@ -6,6 +6,7 @@ import TeacherListPage from './pages/TeacherListPage';
 import TeacherDetailPage from './pages/TeacherDetailPage';
 import ReportsPage from './pages/ReportsPage';
 import WeeklyReportsPage from './pages/WeeklyReportsPage';
+import MonthlyReportsPage from './pages/MonthlyReportsPage';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/teachers/:id" element={<TeacherDetailPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/weekly" element={<WeeklyReportsPage />} />
+        <Route path="/monthly" element={<MonthlyReportsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
