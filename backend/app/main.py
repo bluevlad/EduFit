@@ -7,16 +7,19 @@
     py -m uvicorn app.main:app --port 9070 --reload
 """
 import logging
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import text
 
 from .core.config import settings
 from .core.database import engine
 from .api.v1.routes import api_router
+from .auth.google_oauth import router as auth_router
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +57,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# SessionMiddleware (OAuth state 유지용)
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET", "change-me"))
+
 # API 라우터 등록
 app.include_router(api_router, prefix=settings.api_v1_prefix)
+app.include_router(auth_router, prefix="/api")
 
 
 @app.get("/")
