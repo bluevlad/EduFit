@@ -177,10 +177,10 @@ function TeacherListPage() {
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <Box mb={4}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
-          강사 목록
+          강사 분석
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          학원 강사 {teachers.length}명
+          강사별 평판 현황 {teachers.length}명
         </Typography>
       </Box>
 

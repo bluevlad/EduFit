@@ -7,6 +7,7 @@ from ....core.database import get_db
 from ....schemas.academy import AcademyCreate, AcademyUpdate, AcademyResponse
 from ....schemas.teacher import TeacherResponse
 from ....services import academy_service, teacher_service
+from ....auth.dependencies import require_admin
 
 router = APIRouter(prefix="/academies", tags=["Academies"])
 
@@ -56,8 +57,8 @@ def get_academy_teachers(
 
 
 @router.post("", response_model=AcademyResponse, status_code=201)
-def create_academy(data: AcademyCreate, db: Session = Depends(get_db)):
-    """학원 생성"""
+def create_academy(data: AcademyCreate, db: Session = Depends(get_db), admin=Depends(require_admin)):
+    """학원 생성 (관리자 전용)"""
     existing = academy_service.get_by_code(db, data.code)
     if existing:
         raise HTTPException(status_code=400, detail="이미 존재하는 학원 코드입니다.")
@@ -65,8 +66,8 @@ def create_academy(data: AcademyCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{academy_id}", response_model=AcademyResponse)
-def update_academy(academy_id: int, data: AcademyUpdate, db: Session = Depends(get_db)):
-    """학원 수정"""
+def update_academy(academy_id: int, data: AcademyUpdate, db: Session = Depends(get_db), admin=Depends(require_admin)):
+    """학원 수정 (관리자 전용)"""
     academy = academy_service.update(db, academy_id, data)
     if not academy:
         raise HTTPException(status_code=404, detail="학원을 찾을 수 없습니다.")
@@ -74,8 +75,8 @@ def update_academy(academy_id: int, data: AcademyUpdate, db: Session = Depends(g
 
 
 @router.delete("/{academy_id}")
-def delete_academy(academy_id: int, db: Session = Depends(get_db)):
-    """학원 삭제"""
+def delete_academy(academy_id: int, db: Session = Depends(get_db), admin=Depends(require_admin)):
+    """학원 삭제 (관리자 전용)"""
     if not academy_service.delete(db, academy_id):
         raise HTTPException(status_code=404, detail="학원을 찾을 수 없습니다.")
     return {"success": True, "message": "학원이 삭제되었습니다."}

@@ -471,7 +471,43 @@ class AggregationLog(Base):
 
 
 # ============================================
-# 15. 시스템 설정 테이블
+# 15. 미등록 인물 후보 테이블
+# ============================================
+class UnregisteredCandidate(Base):
+    """크롤링 중 감지된 미등록 인물 후보"""
+    __tablename__ = 'unregistered_candidates'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    mention_count = Column(Integer, default=1)
+    first_seen_at = Column(DateTime, default=datetime.utcnow)
+    last_seen_at = Column(DateTime, default=datetime.utcnow)
+
+    # 감지된 문맥 샘플 (최근 5건)
+    sample_contexts = Column(JSONB, default=[])
+    # 감지된 소스 분포 {"source_code": count}
+    source_distribution = Column(JSONB, default={})
+
+    # 관리자 처리 상태: pending / registered / ignored
+    status = Column(String(20), default='pending')
+    resolved_at = Column(DateTime)
+    resolved_teacher_id = Column(Integer, ForeignKey('teachers.id'), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    resolved_teacher = relationship("Teacher")
+
+    # Constraints
+    __table_args__ = (
+        Index('idx_unregistered_name', 'name'),
+        Index('idx_unregistered_status', 'status'),
+    )
+
+
+# ============================================
+# 16. 시스템 설정 테이블
 # ============================================
 class SystemConfig(Base):
     """시스템 설정"""

@@ -1,7 +1,19 @@
-import { AppBar, Toolbar, Typography, IconButton } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { AppBar, Toolbar, Typography, IconButton, Box, Button, Avatar, Tooltip } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuth } from '../../contexts/AuthContext';
 
 function Header({ drawerWidth, onToggleSidebar }) {
+  const navigate = useNavigate();
+  const { admin, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <AppBar
       position="fixed"
@@ -16,9 +28,35 @@ function Header({ drawerWidth, onToggleSidebar }) {
         >
           <MenuIcon />
         </IconButton>
-        <Typography variant="h6" noWrap component="div">
+        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
           EduFit
         </Typography>
+        <Box display="flex" alignItems="center" gap={1}>
+          {admin ? (
+            <>
+              <Tooltip title={admin.email}>
+                <Avatar src={admin.picture} sx={{ width: 32, height: 32 }}>
+                  {admin.name?.[0]}
+                </Avatar>
+              </Tooltip>
+              <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
+                {admin.name}
+              </Typography>
+              <IconButton color="inherit" onClick={handleLogout} size="small">
+                <LogoutIcon />
+              </IconButton>
+            </>
+          ) : (
+            <Button
+              color="inherit"
+              startIcon={<LoginIcon />}
+              onClick={() => navigate('/login')}
+              size="small"
+            >
+              Admin
+            </Button>
+          )}
+        </Box>
       </Toolbar>
     </AppBar>
   );

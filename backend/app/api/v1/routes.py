@@ -8,6 +8,7 @@ from .endpoints.collection_sources import router as collection_sources_router
 from .endpoints.reports import router as reports_router
 from .endpoints.analysis import router as analysis_router
 from .endpoints.weekly import router as weekly_router
+from .endpoints.unregistered_candidates import router as unregistered_candidates_router
 
 api_router = APIRouter()
 api_router.include_router(academies_router)
@@ -17,3 +18,4 @@ api_router.include_router(collection_sources_router)
 api_router.include_router(reports_router)
 api_router.include_router(analysis_router)
 api_router.include_router(weekly_router)
+api_router.include_router(unregistered_candidates_router)

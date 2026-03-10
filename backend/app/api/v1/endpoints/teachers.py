@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from ....core.database import get_db
 from ....schemas.teacher import TeacherCreate, TeacherUpdate, TeacherResponse
 from ....services import teacher_service, analysis_service
+from ....auth.dependencies import require_admin
 
 router = APIRouter(prefix="/teachers", tags=["Teachers"])
 
@@ -85,15 +86,15 @@ def get_teacher_reports(
 
 
 @router.post("", response_model=TeacherResponse, status_code=201)
-def create_teacher(data: TeacherCreate, db: Session = Depends(get_db)):
-    """강사 생성"""
+def create_teacher(data: TeacherCreate, db: Session = Depends(get_db), admin=Depends(require_admin)):
+    """강사 생성 (관리자 전용)"""
     teacher = teacher_service.create(db, data)
     return _to_response(teacher)
 
 
 @router.put("/{teacher_id}", response_model=TeacherResponse)
-def update_teacher(teacher_id: int, data: TeacherUpdate, db: Session = Depends(get_db)):
-    """강사 수정"""
+def update_teacher(teacher_id: int, data: TeacherUpdate, db: Session = Depends(get_db), admin=Depends(require_admin)):
+    """강사 수정 (관리자 전용)"""
     teacher = teacher_service.update(db, teacher_id, data)
     if not teacher:
         raise HTTPException(status_code=404, detail="강사를 찾을 수 없습니다.")
@@ -101,8 +102,8 @@ def update_teacher(teacher_id: int, data: TeacherUpdate, db: Session = Depends(g
 
 
 @router.delete("/{teacher_id}")
-def delete_teacher(teacher_id: int, db: Session = Depends(get_db)):
-    """강사 삭제"""
+def delete_teacher(teacher_id: int, db: Session = Depends(get_db), admin=Depends(require_admin)):
+    """강사 삭제 (관리자 전용)"""
     if not teacher_service.delete(db, teacher_id):
         raise HTTPException(status_code=404, detail="강사를 찾을 수 없습니다.")
     return {"success": True, "message": "강사가 삭제되었습니다."}

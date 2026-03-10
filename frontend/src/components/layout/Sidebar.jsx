@@ -17,22 +17,56 @@ import PersonIcon from '@mui/icons-material/Person';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import SettingsIcon from '@mui/icons-material/Settings';
+import GroupIcon from '@mui/icons-material/Group';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import { useAuth } from '../../contexts/AuthContext';
 
-const mainMenuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Academies', icon: <SchoolIcon />, path: '/academies' },
-  { text: 'Teachers', icon: <PersonIcon />, path: '/teachers' },
+const analysisMenuItems = [
+  { text: '대시보드', icon: <DashboardIcon />, path: '/' },
+  { text: '학원별 통계', icon: <SchoolIcon />, path: '/academies' },
+  { text: '강사 분석', icon: <PersonIcon />, path: '/teachers' },
 ];
 
 const reportMenuItems = [
-  { text: 'Daily Reports', icon: <AssessmentIcon />, path: '/reports' },
-  { text: 'Weekly Reports', icon: <DateRangeIcon />, path: '/weekly' },
-  { text: 'Monthly Reports', icon: <CalendarMonthIcon />, path: '/monthly' },
+  { text: '일간 리포트', icon: <AssessmentIcon />, path: '/reports' },
+  { text: '주간 리포트', icon: <DateRangeIcon />, path: '/weekly' },
+  { text: '월간 리포트', icon: <CalendarMonthIcon />, path: '/monthly' },
+];
+
+const adminMenuItems = [
+  { text: '학원 관리', icon: <SettingsIcon />, path: '/admin/academies' },
+  { text: '강사 관리', icon: <GroupIcon />, path: '/admin/teachers' },
+  { text: '미등록 후보', icon: <PersonSearchIcon />, path: '/admin/candidates' },
 ];
 
 function Sidebar({ open, drawerWidth }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { admin } = useAuth();
+
+  const renderMenuSection = (label, items) => (
+    <>
+      <Box sx={{ px: 2, py: 1 }}>
+        <Typography variant="caption" color="text.secondary" fontWeight="bold">
+          {label}
+        </Typography>
+      </Box>
+      <List>
+        {items.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton
+              selected={location.pathname === item.path}
+              onClick={() => navigate(item.path)}
+            >
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    </>
+  );
 
   return (
     <Drawer
@@ -48,38 +82,15 @@ function Sidebar({ open, drawerWidth }) {
       }}
     >
       <Toolbar />
-      <List>
-        {mainMenuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+      {renderMenuSection('분석/통계', analysisMenuItems)}
       <Divider />
-      <Box sx={{ px: 2, py: 1 }}>
-        <Typography variant="caption" color="text.secondary" fontWeight="bold">
-          REPORTS
-        </Typography>
-      </Box>
-      <List>
-        {reportMenuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+      {renderMenuSection('리포트', reportMenuItems)}
+      {admin && (
+        <>
+          <Divider />
+          {renderMenuSection('관리', adminMenuItems)}
+        </>
+      )}
     </Drawer>
   );
 }

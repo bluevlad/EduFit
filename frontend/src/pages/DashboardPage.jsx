@@ -245,10 +245,10 @@ function DashboardPage() {
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <Box mb={3}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
-          EduFit Dashboard
+          분석 대시보드
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          학원 강사 평판 분석 시스템
+          학원 강사 평판 분석 종합 현황
         </Typography>
       </Box>
 

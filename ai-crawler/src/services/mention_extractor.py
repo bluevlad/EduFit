@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 from .teacher_matcher import TeacherMatcher, MatchResult
 from .sentiment_analyzer import SentimentAnalyzer
+from .unregistered_detector import UnregisteredDetector
 from ..models import (
     Post, Comment, TeacherMention, Teacher, CollectionSource
 )
@@ -24,6 +25,7 @@ class MentionExtractor:
         self.db = db
         self.matcher = TeacherMatcher(db)
         self.analyzer = SentimentAnalyzer(db)
+        self.detector = UnregisteredDetector(db)
         self._initialized = False
 
     def initialize(self):
@@ -33,6 +35,7 @@ class MentionExtractor:
 
         self.matcher.load_teachers()
         self.analyzer.load_keywords()
+        self.detector.initialize()
         self._initialized = True
 
     def extract_and_save(self, post: Post) -> List[TeacherMention]:
@@ -139,7 +142,8 @@ class MentionExtractor:
             'posts_created': 0,
             'posts_updated': 0,
             'comments_created': 0,
-            'mentions_found': 0
+            'mentions_found': 0,
+            'unregistered_detected': 0,
         }
 
         for post_data in crawled_posts:
@@ -161,6 +165,17 @@ class MentionExtractor:
                 # 멘션 추출
                 mentions = self.extract_and_save(post)
                 stats['mentions_found'] += len(mentions)
+
+                # 미등록 인물 감지
+                source_code = source.code if source else ''
+                for text in [post_data.get('title', ''), post_data.get('content', '')]:
+                    detected = self.detector.process_text(text, source_code)
+                    stats['unregistered_detected'] += len(detected)
+                for comment_data in comments_data:
+                    detected = self.detector.process_text(
+                        comment_data.get('content', ''), source_code
+                    )
+                    stats['unregistered_detected'] += len(detected)
 
             except Exception as e:
                 logger.error(f"Error processing post: {e}")
