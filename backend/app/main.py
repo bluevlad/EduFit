@@ -45,6 +45,8 @@ app = FastAPI(
     description="학원/강사 평판 분석 통합 플랫폼",
     version=settings.app_version,
     lifespan=lifespan,
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
 )
 
 # CORS 설정
@@ -73,7 +75,7 @@ async def root():
         "version": settings.app_version,
         "status": "running",
         "endpoints": {
-            "docs": "/docs",
+            "docs": "/api/docs",
             "academies": f"{settings.api_v1_prefix}/academies",
             "teachers": f"{settings.api_v1_prefix}/teachers",
             "subjects": f"{settings.api_v1_prefix}/subjects",
