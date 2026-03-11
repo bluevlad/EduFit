@@ -99,7 +99,7 @@ jobs:
       run: |
         echo "Waiting for frontend..."
         for i in $(seq 1 15); do
-          if curl -sf http://localhost:4070/ > /dev/null 2>&1; then
+          if curl -sf http://localhost:4070/edufit/ > /dev/null 2>&1; then
             echo "Frontend is serving!"
             break
           fi
@@ -114,7 +114,7 @@ jobs:
 
     - name: Verify API through frontend proxy
       run: |
-        RESPONSE=$(curl -sf http://localhost:4070/api/v1/teachers/ 2>&1)
+        RESPONSE=$(curl -sf http://localhost:4070/edufit/api/v1/academies 2>&1)
         if [ $? -eq 0 ]; then
           echo "API proxy verified successfully"
         else
@@ -126,7 +126,7 @@ jobs:
     - name: Deployment summary
       run: |
         echo "=== EduFit Deployment Complete ==="
-        echo "Frontend: http://localhost:4070"
+        echo "Frontend: http://localhost:4070/edufit/"
         echo "Backend:  http://localhost:9070"
         echo ""
         docker compose ps
