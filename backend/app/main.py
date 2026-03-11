@@ -45,6 +45,7 @@ app = FastAPI(
     description="학원/강사 평판 분석 통합 플랫폼",
     version=settings.app_version,
     lifespan=lifespan,
+    root_path=os.getenv("ROOT_PATH", ""),
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
 )

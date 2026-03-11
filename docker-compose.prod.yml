@@ -13,6 +13,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4070}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4070/edufit}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:4070/edufit}
+      ROOT_PATH: /edufit
       DEBUG: "false"
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     networks:
