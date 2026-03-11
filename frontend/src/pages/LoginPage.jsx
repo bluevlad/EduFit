@@ -20,8 +20,12 @@ function LoginPage() {
   }, [admin, navigate]);
 
   const handleGoogleLogin = () => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
-    window.location.href = `${backendUrl}/api/auth/google/login`;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    if (backendUrl) {
+      window.location.href = `${backendUrl}/api/auth/google/login`;
+    } else {
+      window.location.href = `${import.meta.env.BASE_URL}api/auth/google/login`;
+    }
   };
 
   return (

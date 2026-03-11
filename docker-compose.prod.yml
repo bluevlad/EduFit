@@ -11,6 +11,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${DB_USER:-edufit_svc}:${DB_PASSWORD:?DB_PASSWORD is required}@${DB_HOST:-postgresql}:${DB_PORT:-5432}/${DB_NAME:-edufit}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4070}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4070/edufit}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:4070/edufit}
       DEBUG: "false"
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     networks:
@@ -21,7 +23,10 @@ services:
       - frontend
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_BASE_PATH: /edufit/
     container_name: edufit-frontend
     ports:
       - "4070:4070"

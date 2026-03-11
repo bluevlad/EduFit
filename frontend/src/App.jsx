@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
+import AdminLayout from './components/layout/AdminLayout';
 import DashboardPage from './pages/DashboardPage';
 import AcademyListPage from './pages/AcademyListPage';
 import TeacherListPage from './pages/TeacherListPage';
@@ -12,7 +13,6 @@ import AuthCallbackPage from './pages/AuthCallbackPage';
 import AcademyManagePage from './pages/admin/AcademyManagePage';
 import TeacherManagePage from './pages/admin/TeacherManagePage';
 import CandidatesPage from './pages/admin/CandidatesPage';
-import AdminRoute from './components/AdminRoute';
 
 function App() {
   return (
@@ -21,9 +21,8 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-      {/* 메인 레이아웃 */}
+      {/* 공개 분석/통계 (로그인 불필요) */}
       <Route element={<MainLayout />}>
-        {/* 분석/통계 (공개) */}
         <Route path="/" element={<DashboardPage />} />
         <Route path="/academies" element={<AcademyListPage />} />
         <Route path="/teachers" element={<TeacherListPage />} />
@@ -31,13 +30,13 @@ function App() {
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/weekly" element={<WeeklyReportsPage />} />
         <Route path="/monthly" element={<MonthlyReportsPage />} />
+      </Route>
 
-        {/* 관리자 전용 */}
-        <Route element={<AdminRoute />}>
-          <Route path="/admin/academies" element={<AcademyManagePage />} />
-          <Route path="/admin/teachers" element={<TeacherManagePage />} />
-          <Route path="/admin/candidates" element={<CandidatesPage />} />
-        </Route>
+      {/* 관리자 전용 (로그인 필수, 별도 레이아웃) */}
+      <Route element={<AdminLayout />}>
+        <Route path="/admin/academies" element={<AcademyManagePage />} />
+        <Route path="/admin/teachers" element={<TeacherManagePage />} />
+        <Route path="/admin/candidates" element={<CandidatesPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

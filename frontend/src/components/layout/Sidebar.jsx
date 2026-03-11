@@ -17,10 +17,6 @@ import PersonIcon from '@mui/icons-material/Person';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import SettingsIcon from '@mui/icons-material/Settings';
-import GroupIcon from '@mui/icons-material/Group';
-import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import { useAuth } from '../../contexts/AuthContext';
 
 const analysisMenuItems = [
   { text: '대시보드', icon: <DashboardIcon />, path: '/' },
@@ -34,16 +30,9 @@ const reportMenuItems = [
   { text: '월간 리포트', icon: <CalendarMonthIcon />, path: '/monthly' },
 ];
 
-const adminMenuItems = [
-  { text: '학원 관리', icon: <SettingsIcon />, path: '/admin/academies' },
-  { text: '강사 관리', icon: <GroupIcon />, path: '/admin/teachers' },
-  { text: '미등록 후보', icon: <PersonSearchIcon />, path: '/admin/candidates' },
-];
-
 function Sidebar({ open, drawerWidth }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { admin } = useAuth();
 
   const renderMenuSection = (label, items) => (
     <>
@@ -85,12 +74,6 @@ function Sidebar({ open, drawerWidth }) {
       {renderMenuSection('분석/통계', analysisMenuItems)}
       <Divider />
       {renderMenuSection('리포트', reportMenuItems)}
-      {admin && (
-        <>
-          <Divider />
-          {renderMenuSection('관리', adminMenuItems)}
-        </>
-      )}
     </Drawer>
   );
 }

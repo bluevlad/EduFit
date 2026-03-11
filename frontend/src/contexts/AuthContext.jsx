@@ -4,8 +4,10 @@ import apiClient from '../services/apiClient';
 
 const AuthContext = createContext(null);
 
+const basePath = import.meta.env.BASE_URL || '/';
+
 const authApi = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || '',
+  baseURL: import.meta.env.VITE_BACKEND_URL || basePath,
 });
 
 export function AuthProvider({ children }) {
@@ -26,7 +28,7 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('admin_token');
     if (token) {
       setToken(token);
-      authApi.get('/api/auth/me')
+      authApi.get('api/auth/me')
         .then((res) => setAdmin(res.data))
         .catch(() => {
           localStorage.removeItem('admin_token');
@@ -41,7 +43,7 @@ export function AuthProvider({ children }) {
   const login = (token) => {
     localStorage.setItem('admin_token', token);
     setToken(token);
-    return authApi.get('/api/auth/me').then((res) => {
+    return authApi.get('api/auth/me').then((res) => {
       setAdmin(res.data);
       return res.data;
     });

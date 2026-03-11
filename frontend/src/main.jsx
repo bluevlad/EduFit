@@ -6,11 +6,13 @@ import App from './App';
 import theme from './styles/theme';
 import { AuthProvider } from './contexts/AuthContext';
 
+const basename = import.meta.env.BASE_URL.replace(/\/+$/, '') || '/';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
+      <BrowserRouter basename={basename}>
         <AuthProvider>
           <App />
         </AuthProvider>
