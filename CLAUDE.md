@@ -102,6 +102,20 @@ git checkout prod && git merge main && git push origin prod
 
 > 로컬 환경 정보는 `CLAUDE.local.md` 참조 (git에 포함되지 않음)
 
+## Help Page 관리
+
+> 작성 표준: [HELP_PAGE_GUIDE.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/documentation/HELP_PAGE_GUIDE.md)
+> HTML 템플릿: [help-page-template.html](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/documentation/templates/help-page-template.html)
+
+- **기능 추가/변경/삭제 시 반드시 헬프 페이지도 함께 업데이트**
+- 헬프 파일 위치: `frontend/public/help/`
+- 서비스 accent-color: `#3b82f6` (Blue)
+- 대상 가이드 파일:
+  - `user-guide.html` — EduFit 관리자 가이드 (메인)
+  - `api-guide.html` — API 문서 가이드
+  - `newsletter-guide.html` — 뉴스레터 기능 가이드
+  - `analytics-guide.html` — 분석/통계 기능 가이드
+
 ## Do NOT
 
 - `.env`, `.env.local`, `.env.production` 파일을 직접 생성하거나 커밋하지 마세요
