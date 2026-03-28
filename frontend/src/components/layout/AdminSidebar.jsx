@@ -14,12 +14,14 @@ import {
 import SettingsIcon from '@mui/icons-material/Settings';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import NewspaperIcon from '@mui/icons-material/Newspaper';
 import BarChartIcon from '@mui/icons-material/BarChart';
 
 const adminMenuItems = [
   { text: '학원 관리', icon: <SettingsIcon />, path: '/admin/academies' },
   { text: '강사 관리', icon: <GroupIcon />, path: '/admin/teachers' },
   { text: '미등록 후보', icon: <PersonSearchIcon />, path: '/admin/candidates' },
+  { text: '월간 뉴스레터', icon: <NewspaperIcon />, path: '/admin/newsletter' },
 ];
 
 function AdminSidebar({ open, drawerWidth }) {

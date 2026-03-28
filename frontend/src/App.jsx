@@ -12,6 +12,7 @@ import LoginPage from './pages/LoginPage';
 import AcademyManagePage from './pages/admin/AcademyManagePage';
 import TeacherManagePage from './pages/admin/TeacherManagePage';
 import CandidatesPage from './pages/admin/CandidatesPage';
+import NewsletterPage from './pages/admin/NewsletterPage';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="/admin/academies" element={<AcademyManagePage />} />
         <Route path="/admin/teachers" element={<TeacherManagePage />} />
         <Route path="/admin/candidates" element={<CandidatesPage />} />
+        <Route path="/admin/newsletter" element={<NewsletterPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

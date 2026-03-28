@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduFit {{ period_label }} 월간 리포트</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f6f8;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;">
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f8;">
+<tr><td align="center" style="padding:24px 16px;">
+
+<!-- Container -->
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+<!-- Header -->
+<tr>
+<td style="background:linear-gradient(135deg,#1565c0,#1976d2);padding:32px 40px;text-align:center;">
+  <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">EduFit 월간 리포트</h1>
+  <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">{{ period_label }} | 분석 기간: {{ kpi.dataStartDate }} ~ {{ kpi.dataEndDate }}</p>
+</td>
+</tr>
+
+<!-- KPI Section -->
+<tr>
+<td style="padding:28px 40px 20px;">
+  <h2 style="margin:0 0 16px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">핵심 지표 요약</h2>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="25%" style="padding:8px;text-align:center;">
+      <div style="background:#e3f2fd;border-radius:8px;padding:16px 8px;">
+        <div style="font-size:24px;font-weight:700;color:#1565c0;">{{ "{:,}".format(kpi.totalMentions) }}</div>
+        <div style="font-size:12px;color:#666;margin-top:4px;">총 언급수</div>
+        {% if kpi.mentionGrowthRate is not none %}
+        <div style="font-size:11px;color:{{ '#4caf50' if kpi.mentionGrowthRate >= 0 else '#f44336' }};margin-top:2px;">
+          {{ '+' if kpi.mentionGrowthRate >= 0 else '' }}{{ kpi.mentionGrowthRate }}%
+        </div>
+        {% endif %}
+      </div>
+    </td>
+    <td width="25%" style="padding:8px;text-align:center;">
+      <div style="background:#e8f5e9;border-radius:8px;padding:16px 8px;">
+        <div style="font-size:24px;font-weight:700;color:#2e7d32;">{{ kpi.avgSentimentScore if kpi.avgSentimentScore is not none else '-' }}</div>
+        <div style="font-size:12px;color:#666;margin-top:4px;">평균 감성</div>
+        {% if kpi.sentimentTrend is not none %}
+        <div style="font-size:11px;color:{{ '#4caf50' if kpi.sentimentTrend >= 0 else '#f44336' }};margin-top:2px;">
+          {{ '+' if kpi.sentimentTrend >= 0 else '' }}{{ kpi.sentimentTrend }}
+        </div>
+        {% endif %}
+      </div>
+    </td>
+    <td width="25%" style="padding:8px;text-align:center;">
+      <div style="background:#fff3e0;border-radius:8px;padding:16px 8px;">
+        <div style="font-size:24px;font-weight:700;color:#e65100;">{{ kpi.volatility if kpi.volatility is not none else '-' }}%</div>
+        <div style="font-size:12px;color:#666;margin-top:4px;">변동성</div>
+        <div style="font-size:11px;color:#999;margin-top:2px;">{{ kpi.volatilityLevel }}</div>
+      </div>
+    </td>
+    <td width="25%" style="padding:8px;text-align:center;">
+      <div style="background:#f3e5f5;border-radius:8px;padding:16px 8px;">
+        <div style="font-size:24px;font-weight:700;color:#7b1fa2;">{{ kpi.totalTeachers }}</div>
+        <div style="font-size:12px;color:#666;margin-top:4px;">활동 강사</div>
+      </div>
+    </td>
+  </tr>
+  </table>
+</td>
+</tr>
+
+<!-- Trend Signals -->
+{% if crossover_signals %}
+<tr>
+<td style="padding:8px 40px 20px;">
+  <h2 style="margin:0 0 12px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">트렌드 시그널</h2>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+  {% for signal in crossover_signals %}
+  <tr>
+    <td style="padding:6px 12px;border-left:3px solid {{ '#4caf50' if signal.type == 'golden_cross' else '#f44336' }};">
+      <span style="font-size:13px;color:#333;">
+        <strong style="color:{{ '#4caf50' if signal.type == 'golden_cross' else '#f44336' }};">
+          {{ '골든크로스' if signal.type == 'golden_cross' else '데드크로스' }}
+        </strong>
+        {{ signal.date }} - {{ signal.label }}
+      </span>
+    </td>
+  </tr>
+  {% endfor %}
+  </table>
+</td>
+</tr>
+{% endif %}
+
+<!-- Momentum Ranking -->
+{% if momentum_teachers %}
+<tr>
+<td style="padding:8px 40px 20px;">
+  <h2 style="margin:0 0 12px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">모멘텀 랭킹 TOP {{ momentum_teachers|length }}</h2>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;">
+  <tr style="background:#f5f5f5;">
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:center;border-bottom:1px solid #e0e0e0;" width="8%">#</th>
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:left;border-bottom:1px solid #e0e0e0;" width="20%">강사</th>
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:left;border-bottom:1px solid #e0e0e0;" width="20%">학원</th>
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:center;border-bottom:1px solid #e0e0e0;" width="13%">언급수</th>
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:center;border-bottom:1px solid #e0e0e0;" width="13%">4주ROC</th>
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:center;border-bottom:1px solid #e0e0e0;" width="13%">감성</th>
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:center;border-bottom:1px solid #e0e0e0;" width="13%">시그널</th>
+  </tr>
+  {% for t in momentum_teachers %}
+  <tr style="background:{{ '#ffffff' if loop.index is odd else '#fafafa' }};">
+    <td style="padding:8px;font-size:13px;text-align:center;border-bottom:1px solid #f0f0f0;">
+      {% if loop.index == 1 %}&#x1F947;{% elif loop.index == 2 %}&#x1F948;{% elif loop.index == 3 %}&#x1F949;{% else %}{{ loop.index }}{% endif %}
+    </td>
+    <td style="padding:8px;font-size:13px;font-weight:600;color:#212121;border-bottom:1px solid #f0f0f0;">{{ t.teacherName }}</td>
+    <td style="padding:8px;font-size:12px;color:#666;border-bottom:1px solid #f0f0f0;">{{ t.academyName or '-' }}</td>
+    <td style="padding:8px;font-size:13px;text-align:center;border-bottom:1px solid #f0f0f0;">{{ t.currentMentions }}</td>
+    <td style="padding:8px;font-size:13px;text-align:center;font-weight:600;color:{{ '#4caf50' if t.roc4w and t.roc4w > 0 else '#f44336' if t.roc4w and t.roc4w < 0 else '#999' }};border-bottom:1px solid #f0f0f0;">
+      {{ ('+' ~ t.roc4w ~ '%') if t.roc4w is not none else '-' }}
+    </td>
+    <td style="padding:8px;font-size:13px;text-align:center;border-bottom:1px solid #f0f0f0;">{{ t.avgSentimentScore if t.avgSentimentScore is not none else '-' }}</td>
+    <td style="padding:8px;font-size:11px;text-align:center;border-bottom:1px solid #f0f0f0;">
+      {% set signal_colors = {'surge':'#d32f2f','rising':'#e65100','stable':'#757575','falling':'#1565c0','plunge':'#0d47a1'} %}
+      {% set signal_labels = {'surge':'급등','rising':'상승','stable':'안정','falling':'하락','plunge':'급락'} %}
+      <span style="display:inline-block;padding:2px 8px;border-radius:10px;background:{{ signal_colors.get(t.momentumSignal, '#999') }};color:#fff;font-weight:600;">
+        {{ signal_labels.get(t.momentumSignal, t.momentumSignal) }}
+      </span>
+    </td>
+  </tr>
+  {% endfor %}
+  </table>
+</td>
+</tr>
+{% endif %}
+
+<!-- Pareto -->
+{% if pareto %}
+<tr>
+<td style="padding:8px 40px 20px;">
+  <h2 style="margin:0 0 12px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">언급 집중도 분석</h2>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td style="padding:8px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;border-radius:8px;overflow:hidden;">
+      <tr>
+        <td width="33%" style="padding:12px;text-align:center;border-right:1px solid #e0e0e0;">
+          <div style="font-size:20px;font-weight:700;color:#1565c0;">{{ pareto.top5Ratio }}%</div>
+          <div style="font-size:11px;color:#666;">TOP 5 비중</div>
+        </td>
+        <td width="34%" style="padding:12px;text-align:center;border-right:1px solid #e0e0e0;">
+          <div style="font-size:20px;font-weight:700;color:#1565c0;">{{ pareto.top10Ratio }}%</div>
+          <div style="font-size:11px;color:#666;">TOP 10 비중</div>
+        </td>
+        <td width="33%" style="padding:12px;text-align:center;">
+          <div style="font-size:20px;font-weight:700;color:#e65100;">{{ pareto.concentrationIndex }}</div>
+          <div style="font-size:11px;color:#666;">HHI 지수</div>
+        </td>
+      </tr>
+      </table>
+    </td>
+  </tr>
+  <!-- Pareto bars (top 5) -->
+  {% for item in pareto_top5 %}
+  <tr>
+    <td style="padding:3px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="100" style="font-size:12px;color:#333;padding-right:8px;">{{ item.teacherName }}</td>
+        <td>
+          <div style="background:#e3f2fd;border-radius:4px;height:20px;position:relative;">
+            <div style="background:#1976d2;border-radius:4px;height:20px;width:{{ item.ratio }}%;max-width:100%;"></div>
+          </div>
+        </td>
+        <td width="80" style="font-size:12px;color:#666;text-align:right;padding-left:8px;">{{ item.mentionCount }}건 ({{ item.ratio }}%)</td>
+      </tr>
+      </table>
+    </td>
+  </tr>
+  {% endfor %}
+  </table>
+</td>
+</tr>
+{% endif %}
+
+<!-- Teacher Heatmap -->
+{% if heatmap and heatmap.teachers %}
+<tr>
+<td style="padding:8px 40px 20px;">
+  <h2 style="margin:0 0 12px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">주간 감성 히트맵 (최근 4주)</h2>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;">
+  <tr style="background:#f5f5f5;">
+    <th style="padding:8px;font-size:11px;color:#666;text-align:left;border-bottom:1px solid #e0e0e0;">강사</th>
+    {% for wk in heatmap_weeks_display %}
+    <th style="padding:8px;font-size:11px;color:#666;text-align:center;border-bottom:1px solid #e0e0e0;">{{ wk }}</th>
+    {% endfor %}
+  </tr>
+  {% for teacher_idx in range(heatmap.teachers|length) %}
+  {% set teacher = heatmap.teachers[teacher_idx] %}
+  <tr>
+    <td style="padding:6px 8px;font-size:12px;font-weight:600;color:#333;border-bottom:1px solid #f0f0f0;">{{ teacher.name }}</td>
+    {% for cell in heatmap_cells[teacher_idx] %}
+    <td style="padding:6px;text-align:center;border-bottom:1px solid #f0f0f0;background:{{ cell.bg }};">
+      <span style="font-size:11px;color:{{ cell.fg }};">{{ cell.label }}</span>
+    </td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+  </table>
+  <p style="font-size:11px;color:#999;margin:6px 0 0;">* 색상: 초록(긍정) / 노랑(중립) / 빨강(부정) | 셀 내 숫자: 언급수</p>
+</td>
+</tr>
+{% endif %}
+
+<!-- Academy Summary -->
+{% if academies %}
+<tr>
+<td style="padding:8px 40px 20px;">
+  <h2 style="margin:0 0 12px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">학원별 현황</h2>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;">
+  <tr style="background:#f5f5f5;">
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:left;border-bottom:1px solid #e0e0e0;">학원</th>
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:center;border-bottom:1px solid #e0e0e0;">총 언급</th>
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:center;border-bottom:1px solid #e0e0e0;">평균 감성</th>
+    <th style="padding:10px 8px;font-size:12px;color:#666;text-align:center;border-bottom:1px solid #e0e0e0;">소속 강사</th>
+  </tr>
+  {% for a in academies %}
+  <tr style="background:{{ '#ffffff' if loop.index is odd else '#fafafa' }};">
+    <td style="padding:8px;font-size:13px;font-weight:600;color:#333;border-bottom:1px solid #f0f0f0;">{{ a.academyName }}</td>
+    <td style="padding:8px;font-size:13px;text-align:center;border-bottom:1px solid #f0f0f0;">{{ "{:,}".format(a.totalMentions) }}</td>
+    <td style="padding:8px;font-size:13px;text-align:center;border-bottom:1px solid #f0f0f0;">
+      <span style="color:{{ '#4caf50' if a.avgSentiment and a.avgSentiment >= 0.6 else '#f44336' if a.avgSentiment and a.avgSentiment < 0.4 else '#ff9800' }};">
+        {{ a.avgSentiment if a.avgSentiment is not none else '-' }}
+      </span>
+    </td>
+    <td style="padding:8px;font-size:13px;text-align:center;border-bottom:1px solid #f0f0f0;">{{ a.teacherCount }}명</td>
+  </tr>
+  {% endfor %}
+  </table>
+</td>
+</tr>
+{% endif %}
+
+<!-- Seasonality -->
+{% if seasonality %}
+<tr>
+<td style="padding:8px 40px 20px;">
+  <h2 style="margin:0 0 12px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">요일별 언급 패턴</h2>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+  {% set max_mentions = seasonality.dailyPattern | map(attribute='avgMentions') | max %}
+  {% for day in seasonality.dailyPattern %}
+  <tr>
+    <td width="30" style="padding:4px 0;font-size:13px;font-weight:{{ '700' if day.dayName == seasonality.peakDay else '400' }};color:#333;">{{ day.dayName }}</td>
+    <td style="padding:4px 8px;">
+      <div style="background:#e3f2fd;border-radius:3px;height:18px;">
+        <div style="background:{{ '#1565c0' if day.dayName == seasonality.peakDay else '#90caf9' if day.dayName == seasonality.lowDay else '#42a5f5' }};border-radius:3px;height:18px;width:{{ (day.avgMentions / max_mentions * 100) | round | int if max_mentions else 0 }}%;"></div>
+      </div>
+    </td>
+    <td width="50" style="padding:4px 0;font-size:12px;color:#666;text-align:right;">{{ day.avgMentions }}</td>
+  </tr>
+  {% endfor %}
+  </table>
+  <p style="font-size:11px;color:#999;margin:6px 0 0;">
+    * 최다: {{ seasonality.peakDay }}요일 | 최소: {{ seasonality.lowDay }}요일
+  </p>
+</td>
+</tr>
+{% endif %}
+
+<!-- Correlation Insights -->
+{% if correlation_insights %}
+<tr>
+<td style="padding:8px 40px 20px;">
+  <h2 style="margin:0 0 12px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">상관관계 인사이트</h2>
+  {% for insight in correlation_insights %}
+  <p style="margin:6px 0;padding:8px 12px;background:#f5f5f5;border-radius:6px;font-size:13px;color:#333;border-left:3px solid #1976d2;">
+    {{ insight }}
+  </p>
+  {% endfor %}
+</td>
+</tr>
+{% endif %}
+
+<!-- Anomalies -->
+{% if anomalies %}
+<tr>
+<td style="padding:8px 40px 20px;">
+  <h2 style="margin:0 0 12px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">이상치 감지</h2>
+  {% for a in anomalies %}
+  <p style="margin:4px 0;padding:6px 12px;border-left:3px solid {{ '#4caf50' if a.direction == 'positive' else '#f44336' }};font-size:13px;color:#333;">
+    {{ a.date }} - {{ a.label }} ({{ a.value }})
+  </p>
+  {% endfor %}
+</td>
+</tr>
+{% endif %}
+
+<!-- Footer -->
+<tr>
+<td style="padding:24px 40px;background:#f5f5f5;border-top:1px solid #e0e0e0;text-align:center;">
+  <p style="margin:0;font-size:12px;color:#999;">
+    EduFit - 학원/강사 평판 분석 플랫폼<br>
+    이 리포트는 {{ generated_at }}에 생성되었습니다.
+  </p>
+</td>
+</tr>
+
+</table>
+<!-- /Container -->
+
+</td></tr>
+</table>
+
+</body>
+</html>
