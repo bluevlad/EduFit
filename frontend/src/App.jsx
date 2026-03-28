@@ -9,7 +9,6 @@ import ReportsPage from './pages/ReportsPage';
 import WeeklyReportsPage from './pages/WeeklyReportsPage';
 import MonthlyReportsPage from './pages/MonthlyReportsPage';
 import LoginPage from './pages/LoginPage';
-import AuthCallbackPage from './pages/AuthCallbackPage';
 import AcademyManagePage from './pages/admin/AcademyManagePage';
 import TeacherManagePage from './pages/admin/TeacherManagePage';
 import CandidatesPage from './pages/admin/CandidatesPage';
@@ -19,7 +18,6 @@ function App() {
     <Routes>
       {/* 인증 페이지 (레이아웃 없음) */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
       {/* 공개 분석/통계 (로그인 불필요) */}
       <Route element={<MainLayout />}>

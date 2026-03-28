@@ -13,7 +13,6 @@ from datetime import datetime
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import text
 
 from .core.config import settings
@@ -59,9 +58,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# SessionMiddleware (OAuth state 유지용)
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET", "change-me"))
 
 # API 라우터 등록
 app.include_router(api_router, prefix=settings.api_v1_prefix)

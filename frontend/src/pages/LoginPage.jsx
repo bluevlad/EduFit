@@ -1,30 +1,64 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Container, Paper, Typography, Button, Box, Alert } from '@mui/material';
-import GoogleIcon from '@mui/icons-material/Google';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Container, Paper, Typography, Box, Alert, Button } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 
-const ERROR_MESSAGES = {
-  not_admin: '관리자 권한이 없는 계정입니다.',
-  oauth_failed: 'Google 인증에 실패했습니다.',
-};
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { admin } = useAuth();
-  const error = searchParams.get('error');
+  const { admin, verifyGoogleToken } = useAuth();
+  const googleBtnRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (admin) navigate('/admin/academies');
   }, [admin, navigate]);
 
-  const handleGoogleLogin = () => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    if (backendUrl) {
-      window.location.href = `${backendUrl}/api/auth/google/login`;
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+
+    const initGoogleBtn = () => {
+      if (!window.google?.accounts?.id || !googleBtnRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+      });
+      window.google.accounts.id.renderButton(
+        googleBtnRef.current,
+        { theme: 'outline', size: 'large', width: 320, text: 'signin_with', locale: 'ko' },
+      );
+    };
+
+    if (window.google?.accounts?.id) {
+      initGoogleBtn();
     } else {
-      window.location.href = `${import.meta.env.BASE_URL}api/auth/google/login`;
+      const interval = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          clearInterval(interval);
+          initGoogleBtn();
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, []);
+
+  const handleGoogleCredential = async (response) => {
+    setLoading(true);
+    setError('');
+    try {
+      await verifyGoogleToken(response.credential);
+      navigate('/admin/academies');
+    } catch (err) {
+      const detail = err.response?.data?.detail || '';
+      if (detail === 'not_admin') {
+        setError('관리자 권한이 없는 계정입니다.');
+      } else {
+        setError('Google 인��에 실패했습니다.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,23 +74,21 @@ function LoginPage() {
 
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
-            {ERROR_MESSAGES[error] || '로그인 중 오류가 발생했습니다.'}
+            {error}
           </Alert>
         )}
 
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<GoogleIcon />}
-          onClick={handleGoogleLogin}
-          sx={{ px: 4, py: 1.5 }}
-        >
-          Google 계정으로 로그인
-        </Button>
+        {loading ? (
+          <Typography color="text.secondary">인증 중...</Typography>
+        ) : GOOGLE_CLIENT_ID ? (
+          <Box ref={googleBtnRef} sx={{ display: 'flex', justifyContent: 'center' }} />
+        ) : (
+          <Alert severity="warning">Google OAuth가 설정되지 않았습니다.</Alert>
+        )}
 
         <Box mt={4}>
           <Button variant="text" onClick={() => navigate('/')}>
-            분석 화면으로 돌아가기
+            분석 화면으로 돌아가���
           </Button>
         </Box>
       </Paper>

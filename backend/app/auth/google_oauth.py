@@ -1,11 +1,13 @@
 """
-EduFit Google OAuth 관리자 인증 - OAuth 라우터
+EduFit Google OAuth 관리자 인증 - ID 토큰 검증 방식
+
+프론트엔드에서 Google Identity Services로 받은 credential을 검증하고,
+관리자 이메일 확인 후 JWT 토큰을 발급합니다.
 """
 import logging
 
-from authlib.integrations.starlette_client import OAuth
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 
 from .config import auth_settings
 from .dependencies import require_admin
@@ -13,71 +15,80 @@ from .jwt_handler import create_access_token
 
 logger = logging.getLogger("google_oauth")
 
-# OAuth 클라이언트 초기화
-oauth = OAuth()
-oauth.register(
-    name="google",
-    client_id=auth_settings.google_client_id,
-    client_secret=auth_settings.google_client_secret,
-    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-    client_kwargs={"scope": "openid email profile"},
-)
-
 router = APIRouter(prefix="/auth", tags=["Google OAuth Admin"])
 
 
-@router.get("/google/login")
-async def google_login(request: Request):
-    """Google OAuth 관리자 로그인 시작"""
-    if not auth_settings.google_client_id:
-        raise HTTPException(status_code=503, detail="Google OAuth is not configured")
-    redirect_uri = f"{auth_settings.backend_url}/api/auth/google/callback"
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+class GoogleTokenRequest(BaseModel):
+    """Google ID 토큰 검증 요청"""
+    credential: str
 
 
-@router.get("/google/callback")
-async def google_callback(request: Request):
-    """Google OAuth 콜백 처리"""
+def _verify_google_id_token(credential: str) -> dict:
+    """Google ID 토큰 검증 후 사용자 정보 반환"""
+    from google.auth.transport import requests as google_requests
+    from google.oauth2 import id_token
+
     try:
-        token = await oauth.google.authorize_access_token(request)
-        user_info = token.get("userinfo")
+        idinfo = id_token.verify_oauth2_token(
+            credential,
+            google_requests.Request(),
+            auth_settings.google_client_id,
+        )
+        if idinfo["iss"] not in ("accounts.google.com", "https://accounts.google.com"):
+            raise ValueError("Invalid issuer")
+        return idinfo
+    except ValueError as e:
+        logger.error("Google ID token verification failed: %s", e)
+        raise
 
-        if not user_info:
-            raise HTTPException(status_code=400, detail="Failed to get user info from Google")
 
-        email = user_info.get("email", "")
-        name = user_info.get("name", email.split("@")[0])
-        picture = user_info.get("picture")
+@router.post("/google/verify")
+async def google_verify(body: GoogleTokenRequest):
+    """Google ID 토큰 검증 후 JWT 발급
 
-        # 관리자 이메일 확인
-        if not auth_settings.is_super_admin(email):
-            logger.warning("Non-admin Google login attempt: %s", email)
-            return RedirectResponse(
-                url=f"{auth_settings.frontend_url}/login?error=not_admin"
-            )
+    프론트엔드에서 Google Identity Services로 받은 credential을 검증하고,
+    관리자 이메일 확인 후 JWT 토큰을 반환합니다.
+    """
+    try:
+        idinfo = _verify_google_id_token(body.credential)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google credential",
+        )
 
-        logger.info("Admin Google login: %s", email)
+    email = idinfo.get("email", "")
+    name = idinfo.get("name", email.split("@")[0] if email else "User")
+    picture = idinfo.get("picture")
 
-        access_token = create_access_token(data={
-            "sub": email,
+    # 관리자 이메일 확인
+    if not auth_settings.is_super_admin(email):
+        logger.warning("Non-admin Google login attempt: %s", email)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="not_admin",
+        )
+
+    logger.info("Admin Google login: %s", email)
+
+    access_token = create_access_token(data={
+        "sub": email,
+        "email": email,
+        "name": name,
+        "picture": picture,
+        "role": "super_admin",
+        "auth_type": "google",
+    })
+
+    return {
+        "access_token": access_token,
+        "user": {
             "email": email,
             "name": name,
             "picture": picture,
             "role": "super_admin",
-            "auth_type": "google",
-        })
-
-        return RedirectResponse(
-            url=f"{auth_settings.frontend_url}/auth/callback?token={access_token}"
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("Google OAuth error: %s", e)
-        return RedirectResponse(
-            url=f"{auth_settings.frontend_url}/login?error=oauth_failed"
-        )
+        },
+    }
 
 
 @router.get("/me")
