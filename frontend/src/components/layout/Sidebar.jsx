@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Drawer,
@@ -10,6 +11,7 @@ import {
   Divider,
   Typography,
   Box,
+  Button,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import SchoolIcon from '@mui/icons-material/School';
@@ -17,9 +19,11 @@ import PersonIcon from '@mui/icons-material/Person';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import EmailIcon from '@mui/icons-material/Email';
+import SubscribeDialog from '../SubscribeDialog';
 
 const analysisMenuItems = [
-  { text: '대시보드', icon: <DashboardIcon />, path: '/' },
+  { text: '종합 트렌드', icon: <DashboardIcon />, path: '/' },
   { text: '학원별 통계', icon: <SchoolIcon />, path: '/academies' },
   { text: '강사 분석', icon: <PersonIcon />, path: '/teachers' },
 ];
@@ -33,6 +37,7 @@ const reportMenuItems = [
 function Sidebar({ open, drawerWidth }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
 
   const renderMenuSection = (label, items) => (
     <>
@@ -67,6 +72,8 @@ function Sidebar({ open, drawerWidth }) {
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
         },
       }}
     >
@@ -74,6 +81,19 @@ function Sidebar({ open, drawerWidth }) {
       {renderMenuSection('분석/통계', analysisMenuItems)}
       <Divider />
       {renderMenuSection('리포트', reportMenuItems)}
+      <Box sx={{ flexGrow: 1 }} />
+      <Divider />
+      <Box sx={{ p: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<EmailIcon />}
+          fullWidth
+          onClick={() => setSubscribeOpen(true)}
+        >
+          리포트 구독
+        </Button>
+      </Box>
+      <SubscribeDialog open={subscribeOpen} onClose={() => setSubscribeOpen(false)} />
     </Drawer>
   );
 }

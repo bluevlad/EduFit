@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduFit - 분석/통계 기능 가이드</title>
+  <style>
+    :root {
+      --accent: #3b82f6;
+      --accent-light: #dbeafe;
+      --accent-dark: #1d4ed8;
+      --bg: #ffffff;
+      --bg-alt: #f8fafc;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: white;
+      padding: 48px 24px;
+      text-align: center;
+    }
+
+    .header h1 { font-size: 2rem; margin-bottom: 8px; }
+    .header p { opacity: 0.9; font-size: 1.1rem; }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .toc {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 40px;
+    }
+
+    .toc h2 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: var(--accent-dark);
+    }
+
+    .toc ol { padding-left: 24px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: var(--accent); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    section { margin-bottom: 48px; }
+
+    h2 {
+      font-size: 1.5rem;
+      color: var(--accent-dark);
+      border-bottom: 2px solid var(--accent-light);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      color: var(--text);
+      margin: 20px 0 8px;
+    }
+
+    p { margin-bottom: 12px; }
+
+    .feature-card {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 4px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      margin-top: 0;
+      color: var(--accent-dark);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-trend { background: var(--accent-light); color: var(--accent-dark); }
+    .badge-anomaly { background: #fef2f2; color: var(--error); }
+    .badge-ranking { background: #f0fdf4; color: #15803d; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 20px;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    th {
+      background: var(--bg-alt);
+      font-weight: 600;
+    }
+
+    code {
+      background: var(--bg-alt);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--accent-dark);
+    }
+
+    .tip {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 16px 0;
+    }
+
+    .tip::before {
+      content: "TIP";
+      display: inline-block;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: #15803d;
+      margin-bottom: 4px;
+    }
+
+    .warning {
+      background: #fefce8;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 16px 0;
+    }
+
+    .warning::before {
+      content: "NOTE";
+      display: inline-block;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: #a16207;
+      margin-bottom: 4px;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-light);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>EduFit 분석/통계 가이드</h1>
+  <p>종합 트렌드 대시보드 사용법</p>
+</div>
+
+<div class="container">
+
+  <nav class="toc">
+    <h2>목차</h2>
+    <ol>
+      <li><a href="#overview">개요</a></li>
+      <li><a href="#period">기간 설정</a></li>
+      <li><a href="#kpi">KPI 카드</a></li>
+      <li><a href="#moving-average">이동평균 트렌드</a></li>
+      <li><a href="#bollinger">볼린저 밴드</a></li>
+      <li><a href="#momentum">모멘텀 랭킹</a></li>
+      <li><a href="#pareto">파레토 분석</a></li>
+      <li><a href="#seasonality">계절성 패턴</a></li>
+      <li><a href="#heatmap">강사 히트맵</a></li>
+      <li><a href="#bubble">학원 버블차트</a></li>
+      <li><a href="#correlation">상관관계 분석</a></li>
+    </ol>
+  </nav>
+
+  <!-- 개요 -->
+  <section id="overview">
+    <h2>1. 개요</h2>
+    <p>
+      종합 트렌드 분석 대시보드는 학원 강사의 온라인 평판 데이터를 전문적인 분석 기법으로
+      시각화하여 제공합니다. 특정 날짜의 스냅샷이 아닌 <strong>누적 데이터 기반의 트렌드와 패턴</strong>을
+      파악하는 데 초점을 맞추고 있습니다.
+    </p>
+    <p>대시보드는 8개의 분석 탭으로 구성되며, 각 탭은 서로 다른 관점의 인사이트를 제공합니다.</p>
+  </section>
+
+  <!-- 기간 설정 -->
+  <section id="period">
+    <h2>2. 기간 설정</h2>
+    <p>
+      우측 상단의 토글 버튼으로 분석 기간을 선택할 수 있습니다.
+    </p>
+    <table>
+      <tr><th>기간</th><th>설명</th><th>추천 용도</th></tr>
+      <tr><td>30일</td><td>최근 한 달</td><td>단기 변화 추적</td></tr>
+      <tr><td>60일</td><td>최근 두 달</td><td>중기 트렌드 확인</td></tr>
+      <tr><td>90일</td><td>최근 세 달 (기본값)</td><td>분기 단위 분석</td></tr>
+      <tr><td>180일</td><td>최근 반 년</td><td>장기 추세 파악</td></tr>
+    </table>
+  </section>
+
+  <!-- KPI 카드 -->
+  <section id="kpi">
+    <h2>3. KPI 카드</h2>
+    <p>페이지 상단에 4개의 핵심 지표(KPI) 카드가 표시됩니다.</p>
+    <table>
+      <tr><th>카드</th><th>설명</th></tr>
+      <tr><td><strong>총 언급</strong></td><td>선택 기간 동안의 전체 언급 횟수. 후반기 대비 성장률(%)이 함께 표시됩니다.</td></tr>
+      <tr><td><strong>평균 감성점수</strong></td><td>전체 감성점수의 평균 (-100%~+100%). 전반기 대비 변화량이 표시됩니다.</td></tr>
+      <tr><td><strong>변동성</strong></td><td>일별 언급수의 변동계수(CV). 안정/보통/높음으로 구분됩니다.</td></tr>
+      <tr><td><strong>분석 강사</strong></td><td>해당 기간에 언급된 고유 강사 수입니다.</td></tr>
+    </table>
+  </section>
+
+  <!-- 이동평균 트렌드 -->
+  <section id="moving-average">
+    <h2>4. 이동평균 트렌드</h2>
+    <div class="feature-card">
+      <h3>개념</h3>
+      <p>
+        일별 언급수의 단기적 변동(노이즈)을 제거하고 실제 추세를 파악하기 위해
+        <strong>7일 이동평균(단기)</strong>과 <strong>21일 이동평균(장기)</strong>을 함께 표시합니다.
+      </p>
+    </div>
+
+    <h3>시그널 해석</h3>
+    <table>
+      <tr><th>시그널</th><th>의미</th><th>해석</th></tr>
+      <tr>
+        <td><span class="badge badge-ranking">GC (골든크로스)</span></td>
+        <td>7일 MA가 21일 MA를 상향 돌파</td>
+        <td>관심이 급증하는 추세로 전환</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-anomaly">DC (데드크로스)</span></td>
+        <td>7일 MA가 21일 MA를 하향 돌파</td>
+        <td>관심이 감소하는 추세로 전환</td>
+      </tr>
+    </table>
+
+    <div class="tip">
+      <p>7일 MA가 21일 MA 위에 있으면 상승 추세, 아래에 있으면 하락 추세입니다.</p>
+    </div>
+  </section>
+
+  <!-- 볼린저 밴드 -->
+  <section id="bollinger">
+    <h2>5. 볼린저 밴드</h2>
+    <div class="feature-card">
+      <h3>개념</h3>
+      <p>
+        감성점수의 20일 이동평균을 중심으로 <strong>2 표준편차(2&sigma;) 상한/하한 밴드</strong>를 표시합니다.
+        밴드를 이탈하는 값은 통계적 이상치로 자동 감지됩니다.
+      </p>
+    </div>
+
+    <h3>해석 방법</h3>
+    <ul>
+      <li><strong>밴드 이탈 (빨간 점)</strong>: 비정상적으로 높거나 낮은 감성점수 → 특정 이벤트 발생 가능성</li>
+      <li><strong>밴드 수축</strong>: 변동성이 줄어들고 있음 → 큰 변화가 임박한 신호</li>
+      <li><strong>밴드 확장</strong>: 변동성이 커지고 있음 → 불안정한 상태</li>
+    </ul>
+  </section>
+
+  <!-- 모멘텀 랭킹 -->
+  <section id="momentum">
+    <h2>6. 모멘텀 랭킹</h2>
+    <div class="feature-card">
+      <h3>개념</h3>
+      <p>
+        단순 언급수 순위가 아닌 <strong>변화율(ROC, Rate of Change)</strong>을 기준으로 강사를 랭킹합니다.
+        현재 언급수가 적더라도 빠르게 성장 중인 강사를 발견할 수 있습니다.
+      </p>
+    </div>
+
+    <h3>컬럼 설명</h3>
+    <table>
+      <tr><th>컬럼</th><th>설명</th></tr>
+      <tr><td><strong>4주 ROC</strong></td><td>최근 4주 대비 이전 4주의 언급수 변화율(%)</td></tr>
+      <tr><td><strong>8주 ROC</strong></td><td>최근 8주 대비 이전 8주의 변화율 (장기 추세)</td></tr>
+      <tr><td><strong>감성 변화</strong></td><td>최근 4주 대비 이전 4주의 감성점수 차이</td></tr>
+    </table>
+
+    <h3>시그널 의미</h3>
+    <table>
+      <tr><th>시그널</th><th>조건</th><th>의미</th></tr>
+      <tr><td>급상승</td><td>ROC &ge; +50%</td><td>관심이 폭발적으로 증가</td></tr>
+      <tr><td>상승</td><td>ROC +20~49%</td><td>꾸준한 관심 증가</td></tr>
+      <tr><td>유지</td><td>ROC -19~+19%</td><td>안정적 상태</td></tr>
+      <tr><td>하락</td><td>ROC -20~-49%</td><td>관심 감소 추세</td></tr>
+      <tr><td>급하락</td><td>ROC &le; -50%</td><td>관심이 급격히 감소</td></tr>
+    </table>
+  </section>
+
+  <!-- 파레토 분석 -->
+  <section id="pareto">
+    <h2>7. 파레토 분석</h2>
+    <div class="feature-card">
+      <h3>개념</h3>
+      <p>
+        <strong>80/20 법칙</strong>: 소수의 강사가 전체 언급의 대부분을 차지하는 집중도를 분석합니다.
+        막대 그래프(개별 비율)와 누적 비율 곡선이 함께 표시됩니다.
+      </p>
+    </div>
+
+    <h3>지표</h3>
+    <ul>
+      <li><strong>TOP 5 비율</strong>: 상위 5명이 전체 언급에서 차지하는 비율</li>
+      <li><strong>TOP 10 비율</strong>: 상위 10명의 누적 비율</li>
+      <li><strong>80% 기준선</strong>: 빨간 점선으로 표시, 이 선 아래의 강사 수가 적을수록 집중도가 높음</li>
+    </ul>
+  </section>
+
+  <!-- 계절성 패턴 -->
+  <section id="seasonality">
+    <h2>8. 계절성 패턴</h2>
+    <div class="feature-card">
+      <h3>개념</h3>
+      <p>
+        요일에 따른 평균 언급 패턴을 분석합니다. 커뮤니티 활동이 활발한 요일과
+        한산한 요일을 파악할 수 있습니다.
+      </p>
+    </div>
+    <ul>
+      <li><strong>파란색 강조 막대</strong>: 언급이 가장 많은 요일 (최다)</li>
+      <li><strong>빨간색 막대</strong>: 언급이 가장 적은 요일 (최소)</li>
+    </ul>
+  </section>
+
+  <!-- 강사 히트맵 -->
+  <section id="heatmap">
+    <h2>9. 강사 히트맵</h2>
+    <div class="feature-card">
+      <h3>개념</h3>
+      <p>
+        X축(주차) x Y축(강사)의 매트릭스에서 각 셀의 <strong>색상은 감성점수</strong>,
+        <strong>숫자는 언급수</strong>를 나타냅니다. 전체 현황을 한눈에 파악할 수 있습니다.
+      </p>
+    </div>
+
+    <h3>색상 해석</h3>
+    <table>
+      <tr><th>색상</th><th>감성</th><th>점수 범위</th></tr>
+      <tr><td style="background:#a12c2c;color:#fff;text-align:center;">빨간색</td><td>부정적</td><td>-1.0 ~ -0.3</td></tr>
+      <tr><td style="background:#a1932c;color:#fff;text-align:center;">노란색</td><td>중립</td><td>-0.3 ~ +0.3</td></tr>
+      <tr><td style="background:#2ca12c;color:#fff;text-align:center;">초록색</td><td>긍정적</td><td>+0.3 ~ +1.0</td></tr>
+      <tr><td style="background:#e0e0e0;text-align:center;">회색</td><td colspan="2">데이터 없음</td></tr>
+    </table>
+
+    <div class="tip">
+      <p>셀 위에 마우스를 올리면 정확한 감성점수와 언급수를 확인할 수 있습니다.</p>
+    </div>
+  </section>
+
+  <!-- 학원 버블차트 -->
+  <section id="bubble">
+    <h2>10. 학원 버블차트</h2>
+    <div class="feature-card">
+      <h3>개념</h3>
+      <p>
+        각 학원을 하나의 버블로 표시하여 <strong>3가지 차원</strong>을 동시에 비교합니다.
+      </p>
+    </div>
+
+    <h3>축 해석</h3>
+    <table>
+      <tr><th>차원</th><th>축/속성</th><th>의미</th></tr>
+      <tr><td>X축</td><td>총 언급수</td><td>학원의 전체 온라인 노출도</td></tr>
+      <tr><td>Y축</td><td>평균 감성점수</td><td>학원에 대한 전반적 평가 (위=긍정, 아래=부정)</td></tr>
+      <tr><td>버블 크기</td><td>소속 강사 수</td><td>학원의 규모</td></tr>
+    </table>
+
+    <h3>사분면 해석</h3>
+    <ul>
+      <li><strong>우상단</strong>: 많이 언급되면서 긍정적 → 이상적인 위치</li>
+      <li><strong>좌상단</strong>: 적게 언급되지만 긍정적 → 홍보 여력 있음</li>
+      <li><strong>우하단</strong>: 많이 언급되면서 부정적 → 즉시 관리 필요</li>
+      <li><strong>좌하단</strong>: 적게 언급되면서 부정적 → 관심 필요</li>
+    </ul>
+  </section>
+
+  <!-- 상관관계 분석 -->
+  <section id="correlation">
+    <h2>11. 상관관계 분석</h2>
+    <div class="feature-card">
+      <h3>개념</h3>
+      <p>
+        5개 핵심 지표(언급수, 긍정수, 부정수, 추천수, 감성점수) 간의
+        <strong>피어슨 상관계수</strong>를 5x5 매트릭스로 표시합니다.
+      </p>
+    </div>
+
+    <h3>상관계수 해석</h3>
+    <table>
+      <tr><th>계수 범위</th><th>강도</th><th>색상</th></tr>
+      <tr><td>+0.7 ~ +1.0</td><td>강한 양의 상관</td><td style="background:rgba(25,118,210,0.6);color:#fff;text-align:center;">진한 파랑</td></tr>
+      <tr><td>+0.4 ~ +0.7</td><td>보통의 양의 상관</td><td style="background:rgba(25,118,210,0.35);text-align:center;">중간 파랑</td></tr>
+      <tr><td>-0.2 ~ +0.2</td><td>미미한 상관</td><td style="background:#fff;text-align:center;border:1px solid #e0e0e0;">흰색</td></tr>
+      <tr><td>-0.7 ~ -0.4</td><td>보통의 음의 상관</td><td style="background:rgba(244,67,54,0.35);text-align:center;">중간 빨강</td></tr>
+      <tr><td>-1.0 ~ -0.7</td><td>강한 음의 상관</td><td style="background:rgba(244,67,54,0.6);color:#fff;text-align:center;">진한 빨강</td></tr>
+    </table>
+
+    <div class="warning">
+      <p>
+        상관관계는 인과관계를 의미하지 않습니다. "언급수 증가 → 감성점수 하락"이라는
+        상관관계가 있다면, 부정적 이슈로 인해 언급이 늘어났을 가능성을 시사할 뿐
+        언급이 늘어남으로써 감성이 나빠진다는 뜻은 아닙니다.
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<div class="footer">
+  <p>EduFit &copy; 2026 &mdash; 학원/강사 평판 분석 통합 플랫폼</p>
+</div>
+
+</body>
+</html>
