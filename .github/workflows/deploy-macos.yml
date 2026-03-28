@@ -25,6 +25,9 @@ jobs:
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
       NAVER_ID: ${{ secrets.NAVER_ID }}
       NAVER_PW: ${{ secrets.NAVER_PW }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      SUPER_ADMIN_EMAILS: ${{ secrets.SUPER_ADMIN_EMAILS }}
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
       DEBUG: "false"
       LOG_LEVEL: "INFO"
 
@@ -45,6 +48,9 @@ jobs:
         NAVER_PW=${{ secrets.NAVER_PW }}
         SMTP_USER=${{ secrets.SMTP_USER }}
         SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+        GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+        SUPER_ADMIN_EMAILS=${{ secrets.SUPER_ADMIN_EMAILS }}
+        JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
         CRAWL_LIMIT=50
         DEBUG=false
         LOG_LEVEL=INFO
