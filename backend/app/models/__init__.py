@@ -11,6 +11,7 @@ from .academy_daily_stat import AcademyDailyStat
 from .crawl_log import CrawlLog
 from .analysis_keyword import AnalysisKeyword
 from .unregistered_candidate import UnregisteredCandidate
+from .subscription import Subscription
 
 __all__ = [
     "Academy",
@@ -25,4 +26,5 @@ __all__ = [
     "CrawlLog",
     "AnalysisKeyword",
     "UnregisteredCandidate",
+    "Subscription",
 ]

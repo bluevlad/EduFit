@@ -14,6 +14,13 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
+    # SMTP 설정
+    smtp_host: str = Field(default="smtp.gmail.com", alias="SMTP_HOST")
+    smtp_port: int = Field(default=587, alias="SMTP_PORT")
+    smtp_user: str = Field(default="", alias="SMTP_USER")
+    smtp_password: str = Field(default="", alias="SMTP_PASSWORD")
+    smtp_from_name: str = Field(default="EduFit", alias="SMTP_FROM_NAME")
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

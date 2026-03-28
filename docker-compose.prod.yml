@@ -14,6 +14,8 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4070/edufit}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:4070/edufit}
       ROOT_PATH: /edufit
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       DEBUG: "false"
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     networks:

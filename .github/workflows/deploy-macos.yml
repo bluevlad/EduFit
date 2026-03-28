@@ -43,6 +43,8 @@ jobs:
         CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
         NAVER_ID=${{ secrets.NAVER_ID }}
         NAVER_PW=${{ secrets.NAVER_PW }}
+        SMTP_USER=${{ secrets.SMTP_USER }}
+        SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
         CRAWL_LIMIT=50
         DEBUG=false
         LOG_LEVEL=INFO
