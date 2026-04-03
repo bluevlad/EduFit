@@ -11,7 +11,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${DB_USER:-edufit_svc}:${DB_PASSWORD:?DB_PASSWORD is required}@${DB_HOST:-postgresql}:${DB_PORT:-5432}/${DB_NAME:-edufit}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4070}
-      ROOT_PATH: /edufit
+      ROOT_PATH: ""
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
@@ -32,7 +32,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_BASE_PATH: /edufit/
+        VITE_BASE_PATH: /
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     container_name: edufit-frontend
     ports:
