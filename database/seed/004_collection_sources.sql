@@ -21,7 +21,12 @@ INSERT INTO collection_sources (name, code, base_url, source_type, config) VALUE
 ('뽐뿌 - 공무원 게시판', 'ppomppu_gongmuwon', 'https://www.ppomppu.co.kr/zboard/zboard.php?id=government', 'forum',
  '{"board_id": "government", "requires_login": false}'),
 ('블라인드 - 공무원 게시판', 'blind_gongmuwon', 'https://www.teamblind.com/kr/topics/Civil-Service', 'forum',
- '{"topic": "Civil-Service", "requires_login": true}')
+ '{"topic": "Civil-Service", "requires_login": true}'),
+-- 뉴스 소스
+('네이버 뉴스', 'naver_news', 'https://openapi.naver.com/v1/search/news.json', 'news',
+ '{"type": "api", "requires_login": false, "max_results_per_keyword": 10}'),
+('구글 뉴스', 'google_news', 'https://news.google.com/rss/search', 'news',
+ '{"type": "rss", "requires_login": false, "max_results_per_keyword": 10}')
 ON CONFLICT (code) DO UPDATE SET
     name = EXCLUDED.name,
     base_url = EXCLUDED.base_url,

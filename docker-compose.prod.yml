@@ -53,6 +53,8 @@ services:
       APP_MODE: full
       NAVER_ID: ${NAVER_ID:-}
       NAVER_PW: ${NAVER_PW:-}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
       CRAWL_LIMIT: ${CRAWL_LIMIT:-50}
       TZ: Asia/Seoul
     networks:

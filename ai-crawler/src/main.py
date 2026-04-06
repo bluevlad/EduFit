@@ -99,11 +99,15 @@ async def run_full_mode():
     # 스케줄러 시작
     naver_id = os.getenv("NAVER_ID")
     naver_pw = os.getenv("NAVER_PW")
+    naver_client_id = os.getenv("NAVER_CLIENT_ID")
+    naver_client_secret = os.getenv("NAVER_CLIENT_SECRET")
     crawl_limit = int(os.getenv("CRAWL_LIMIT", "50"))
 
     scheduler = TaskScheduler(
         naver_id=naver_id,
         naver_pw=naver_pw,
+        naver_client_id=naver_client_id,
+        naver_client_secret=naver_client_secret,
         crawl_limit=crawl_limit
     )
     scheduler.setup_default_jobs()

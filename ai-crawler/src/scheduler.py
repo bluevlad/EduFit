@@ -25,10 +25,14 @@ class TaskScheduler:
         self,
         naver_id: str = None,
         naver_pw: str = None,
+        naver_client_id: str = None,
+        naver_client_secret: str = None,
         crawl_limit: int = 50
     ):
         self.naver_id = naver_id or os.getenv("NAVER_ID")
         self.naver_pw = naver_pw or os.getenv("NAVER_PW")
+        self.naver_client_id = naver_client_id or os.getenv("NAVER_CLIENT_ID")
+        self.naver_client_secret = naver_client_secret or os.getenv("NAVER_CLIENT_SECRET")
         self.crawl_limit = crawl_limit
 
         self.scheduler = AsyncIOScheduler(timezone="Asia/Seoul")
@@ -107,13 +111,28 @@ class TaskScheduler:
             orchestrator = CrawlerOrchestrator(
                 db=db,
                 naver_id=self.naver_id,
-                naver_pw=self.naver_pw
+                naver_pw=self.naver_pw,
+                naver_client_id=self.naver_client_id,
+                naver_client_secret=self.naver_client_secret,
             )
             results = await orchestrator.crawl_all_sources(limit=self.crawl_limit)
 
-            success_count = sum(1 for r in results if r['success'])
-            total_posts = sum(r['posts_collected'] for r in results)
-            total_mentions = sum(r['mentions_found'] for r in results)
+            # 뉴스 수집 (네이버 API + 구글 RSS)
+            try:
+                news_result = await orchestrator.collect_news()
+                results.append(news_result)
+                if news_result.get('success'):
+                    logger.info(
+                        f"News collection: {news_result['posts_collected']} new, "
+                        f"{news_result.get('duplicates', 0)} dup, "
+                        f"{news_result['mentions_found']} mentions"
+                    )
+            except Exception as e:
+                logger.error(f"News collection error: {e}")
+
+            success_count = sum(1 for r in results if r.get('success'))
+            total_posts = sum(r.get('posts_collected', 0) for r in results)
+            total_mentions = sum(r.get('mentions_found', 0) for r in results)
 
             logger.info(
                 f"Crawl completed: {success_count}/{len(results)} sources, "

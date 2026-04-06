@@ -12,6 +12,7 @@ from .database import SessionLocal
 from .models import CollectionSource, CrawlLog
 from .crawlers import NaverCafeCrawler, DCInsideCrawler
 from .services import MentionExtractor
+from .services.news_collector import NewsCollector
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +33,19 @@ class CrawlerOrchestrator:
         'dcinside_gosi': ('dcinside', 'gosi'),
     }
 
-    def __init__(self, db: Session = None, naver_id: str = None, naver_pw: str = None):
+    def __init__(
+        self,
+        db: Session = None,
+        naver_id: str = None,
+        naver_pw: str = None,
+        naver_client_id: str = None,
+        naver_client_secret: str = None,
+    ):
         self.db = db or SessionLocal()
         self.naver_id = naver_id
         self.naver_pw = naver_pw
+        self.naver_client_id = naver_client_id
+        self.naver_client_secret = naver_client_secret
         self.extractor = MentionExtractor(self.db)
 
     def get_active_sources(self) -> List[CollectionSource]:
@@ -216,9 +226,72 @@ class CrawlerOrchestrator:
         return all_results
 
 
+    async def collect_news(self) -> Dict[str, Any]:
+        """뉴스 수집 (네이버 API + 구글 RSS)
+
+        기존 카페/갤러리 크롤링과 별도로 실행되며,
+        동일한 Post → MentionExtractor 파이프라인을 사용합니다.
+        """
+        log = CrawlLog(
+            source_id=None,
+            started_at=datetime.utcnow(),
+            status='running'
+        )
+        # 네이버 뉴스 소스 ID로 로그 기록
+        naver_source = self.db.query(CollectionSource).filter(
+            CollectionSource.code == 'naver_news'
+        ).first()
+        if naver_source:
+            log.source_id = naver_source.id
+        self.db.add(log)
+        self.db.commit()
+
+        try:
+            collector = NewsCollector(
+                db=self.db,
+                naver_client_id=self.naver_client_id,
+                naver_client_secret=self.naver_client_secret,
+            )
+            stats = collector.collect_all()
+
+            log.status = 'completed'
+            log.finished_at = datetime.utcnow()
+            log.posts_collected = stats['total_new']
+            log.mentions_found = stats['total_mentions']
+
+            self.db.commit()
+
+            return {
+                'success': True,
+                'source_code': 'news',
+                'posts_collected': stats['total_new'],
+                'duplicates': stats['total_duplicate'],
+                'mentions_found': stats['total_mentions'],
+                'keyword_stats': stats['keyword_stats'],
+            }
+
+        except Exception as e:
+            logger.error(f"News collection error: {e}")
+            log.status = 'failed'
+            log.finished_at = datetime.utcnow()
+            log.error_message = str(e)
+            self.db.commit()
+
+            return {
+                'success': False,
+                'source_code': 'news',
+                'posts_collected': 0,
+                'duplicates': 0,
+                'mentions_found': 0,
+                'error': str(e),
+            }
+
+
 async def run_daily_crawl(
     naver_id: str = None,
     naver_pw: str = None,
+    naver_client_id: str = None,
+    naver_client_secret: str = None,
     limit: int = 50
 ):
     """데일리 크롤링 실행 함수"""
@@ -227,11 +300,17 @@ async def run_daily_crawl(
         orchestrator = CrawlerOrchestrator(
             db=db,
             naver_id=naver_id,
-            naver_pw=naver_pw
+            naver_pw=naver_pw,
+            naver_client_id=naver_client_id,
+            naver_client_secret=naver_client_secret,
         )
 
-        # 최신글 크롤링
+        # 최신글 크롤링 (카페/갤러리)
         results = await orchestrator.crawl_all_sources(limit=limit)
+
+        # 뉴스 수집 (네이버 API + 구글 RSS)
+        news_result = await orchestrator.collect_news()
+        results.append(news_result)
 
         return results
 

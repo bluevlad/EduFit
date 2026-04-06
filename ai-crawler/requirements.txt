@@ -7,3 +7,4 @@ beautifulsoup4==4.12.3
 textblob==0.18.0
 playwright==1.57.0
 apscheduler==3.10.4
+feedparser==6.0.11
