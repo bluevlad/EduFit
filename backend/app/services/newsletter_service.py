@@ -4,11 +4,15 @@ trend_service의 분석 데이터를 Jinja2 이메일 템플릿으로 렌더링�
 뉴스레터 플랫폼에서 발송 시 이 서비스가 생성한 HTML을 참조합니다.
 """
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from jinja2 import Environment, FileSystemLoader
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from ..models.collection_source import CollectionSource
+from ..models.post import Post
+from ..models.teacher_mention import TeacherMention
 from . import trend_service
 
 # 템플릿 디렉토리
@@ -29,6 +33,74 @@ def _sentiment_cell(sentiment, mentions):
     return {"bg": bg, "fg": fg, "label": label}
 
 
+def _get_source_distribution(db: Session, days: int) -> dict:
+    """소스 타입별 언급 수 집계 (news/cafe/gallery/forum)"""
+    cutoff = date.today() - timedelta(days=days)
+    rows = (
+        db.query(
+            CollectionSource.source_type,
+            func.count(TeacherMention.id).label("cnt"),
+        )
+        .join(Post, TeacherMention.post_id == Post.id)
+        .join(CollectionSource, Post.source_id == CollectionSource.id)
+        .filter(Post.post_date >= cutoff)
+        .group_by(CollectionSource.source_type)
+        .all()
+    )
+    total = sum(r.cnt for r in rows) or 1
+    source_type_labels = {
+        "news": "뉴스",
+        "cafe": "카페",
+        "gallery": "갤러리",
+        "forum": "포럼",
+    }
+    return {
+        "distribution": [
+            {
+                "source_type": r.source_type,
+                "label": source_type_labels.get(r.source_type, r.source_type),
+                "mention_count": r.cnt,
+                "ratio": round(r.cnt / total * 100, 1),
+            }
+            for r in rows
+        ],
+        "total": total,
+    }
+
+
+def _get_recent_news_articles(db: Session, days: int, limit: int = 10) -> list:
+    """최근 뉴스 기사 원문 정보 (제목/URL/소스명/날짜)"""
+    cutoff = date.today() - timedelta(days=days)
+    posts = (
+        db.query(
+            Post,
+            CollectionSource.name.label("source_name"),
+            func.count(TeacherMention.id).label("mention_count"),
+        )
+        .join(CollectionSource, Post.source_id == CollectionSource.id)
+        .outerjoin(TeacherMention, TeacherMention.post_id == Post.id)
+        .filter(
+            CollectionSource.source_type == "news",
+            Post.post_date >= cutoff,
+        )
+        .group_by(Post.id, CollectionSource.name)
+        .order_by(Post.post_date.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "title": row.Post.title,
+            "url": row.Post.url,
+            "source_name": row.source_name,
+            "published_at": row.Post.post_date.strftime("%Y-%m-%d") if row.Post.post_date else None,
+            "keyword": row.Post.author,
+            "mention_count": row.mention_count,
+        }
+        for row in posts
+    ]
+
+
 def generate_newsletter_data(db: Session, days: int = 30):
     """뉴스레터에 필요한 데이터를 수집하고 가공"""
     kpi = trend_service.get_overview_kpi(db, days)
@@ -40,6 +112,8 @@ def generate_newsletter_data(db: Session, days: int = 30):
     correlation = trend_service.get_correlation(db, days)
     heatmap = trend_service.get_teacher_heatmap(db, weeks=4, limit=10)
     academy_bubble = trend_service.get_academy_bubble(db, days)
+    source_distribution = _get_source_distribution(db, days)
+    news_articles = _get_recent_news_articles(db, days)
 
     return {
         "kpi": kpi,
@@ -51,6 +125,8 @@ def generate_newsletter_data(db: Session, days: int = 30):
         "correlation": correlation,
         "heatmap": heatmap,
         "academy_bubble": academy_bubble,
+        "source_distribution": source_distribution,
+        "news_articles": news_articles,
     }
 
 
@@ -113,6 +189,8 @@ def render_newsletter_html(db: Session, year: int = None, month: int = None, day
         seasonality=data["seasonality"],
         correlation_insights=data["correlation"].get("insights", []),
         anomalies=data["bollinger"].get("anomalies", []),
+        source_distribution=data["source_distribution"],
+        news_articles=data["news_articles"],
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M"),
     )
 

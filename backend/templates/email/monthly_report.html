@@ -67,6 +67,64 @@
 </td>
 </tr>
 
+<!-- Source Distribution -->
+{% if source_distribution and source_distribution.distribution %}
+<tr>
+<td style="padding:8px 40px 20px;">
+  <h2 style="margin:0 0 12px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">소스별 언급 분포</h2>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+  {% for item in source_distribution.distribution %}
+  <tr>
+    <td width="60" style="padding:4px 0;font-size:13px;font-weight:600;color:#333;">{{ item.label }}</td>
+    <td style="padding:4px 8px;">
+      <div style="background:#e3f2fd;border-radius:4px;height:20px;">
+        <div style="background:{{ '#1565c0' if item.source_type == 'news' else '#43a047' if item.source_type == 'cafe' else '#f57c00' if item.source_type == 'gallery' else '#8e24aa' }};border-radius:4px;height:20px;width:{{ item.ratio }}%;max-width:100%;"></div>
+      </div>
+    </td>
+    <td width="90" style="padding:4px 0;font-size:12px;color:#666;text-align:right;">{{ "{:,}".format(item.mention_count) }}건 ({{ item.ratio }}%)</td>
+  </tr>
+  {% endfor %}
+  </table>
+</td>
+</tr>
+{% endif %}
+
+<!-- News Highlights -->
+{% if news_articles %}
+<tr>
+<td style="padding:8px 40px 20px;">
+  <h2 style="margin:0 0 12px;color:#212121;font-size:18px;font-weight:700;border-bottom:2px solid #1976d2;padding-bottom:8px;">뉴스 하이라이트</h2>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;">
+  {% for article in news_articles[:5] %}
+  <tr style="background:{{ '#ffffff' if loop.index is odd else '#fafafa' }};">
+    <td style="padding:12px 16px;border-bottom:1px solid #f0f0f0;">
+      <div style="font-size:14px;font-weight:600;">
+        {% if article.url %}
+        <a href="{{ article.url }}" style="color:#1a73e8;text-decoration:none;">{{ article.title }}</a>
+        {% else %}
+        <span style="color:#212121;">{{ article.title }}</span>
+        {% endif %}
+      </div>
+      <div style="font-size:12px;color:#888;margin-top:4px;">
+        <span style="display:inline-block;padding:1px 6px;background:{{ '#e3f2fd' if article.source_name and '네이버' in article.source_name else '#f3e5f5' }};border-radius:3px;font-size:11px;color:#555;">{{ article.source_name or '뉴스' }}</span>
+        {% if article.published_at %}
+        <span style="margin-left:6px;">{{ article.published_at }}</span>
+        {% endif %}
+        {% if article.mention_count and article.mention_count > 0 %}
+        <span style="margin-left:6px;color:#1565c0;font-weight:600;">언급 {{ article.mention_count }}건</span>
+        {% endif %}
+      </div>
+    </td>
+  </tr>
+  {% endfor %}
+  </table>
+  {% if news_articles|length > 5 %}
+  <p style="font-size:11px;color:#999;margin:6px 0 0;">* 총 {{ news_articles|length }}건 중 최근 5건 표시</p>
+  {% endif %}
+</td>
+</tr>
+{% endif %}
+
 <!-- Trend Signals -->
 {% if crossover_signals %}
 <tr>
