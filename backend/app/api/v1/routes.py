@@ -12,6 +12,7 @@ from .endpoints.unregistered_candidates import router as unregistered_candidates
 from .endpoints.subscriptions import router as subscriptions_router
 from .endpoints.trends import router as trends_router
 from .endpoints.newsletter import router as newsletter_router
+from .endpoints.news import router as news_router
 
 api_router = APIRouter()
 api_router.include_router(academies_router)
@@ -25,3 +26,4 @@ api_router.include_router(unregistered_candidates_router)
 api_router.include_router(subscriptions_router)
 api_router.include_router(trends_router)
 api_router.include_router(newsletter_router)
+api_router.include_router(news_router)
