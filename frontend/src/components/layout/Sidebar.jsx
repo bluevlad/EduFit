@@ -23,7 +23,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import SubscribeDialog from '../SubscribeDialog';
 
 const analysisMenuItems = [
-  { text: '종합 트렌드', icon: <DashboardIcon />, path: '/' },
+  { text: '종합 트렌드', icon: <DashboardIcon />, path: '/dashboard' },
   { text: '학원별 통계', icon: <SchoolIcon />, path: '/academies' },
   { text: '강사 분석', icon: <PersonIcon />, path: '/teachers' },
 ];

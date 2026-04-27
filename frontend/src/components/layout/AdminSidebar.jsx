@@ -63,7 +63,7 @@ function AdminSidebar({ open, drawerWidth }) {
       <Divider />
       <List>
         <ListItem disablePadding>
-          <ListItemButton onClick={() => navigate('/')}>
+          <ListItemButton onClick={() => navigate('/dashboard')}>
             <ListItemIcon><BarChartIcon /></ListItemIcon>
             <ListItemText primary="분석/통계 화면으로" />
           </ListItemButton>
