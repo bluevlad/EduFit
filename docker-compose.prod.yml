@@ -3,7 +3,11 @@
 # 보안 정보는 .env 파일에서 관리 (.env.example 참조)
 
 services:
+  # NOTE: backend/frontend는 2026-05-01부로 운영 중지 (gateway 분리 + 데이터 활용도 낮음).
+  # 재가동이 필요하면: docker compose --profile archived up -d backend frontend
+  # ai-crawler는 단독 운영 중이며 자체 스케줄러로 4h 간격 크롤 + 주간 집계 수행.
   backend:
+    profiles: ["archived"]
     build: ./backend
     container_name: edufit-backend
     ports:
@@ -29,6 +33,7 @@ services:
       - frontend
 
   frontend:
+    profiles: ["archived"]
     build:
       context: ./frontend
       args:
@@ -61,8 +66,6 @@ services:
       - edufit-network
       - database-network
     restart: always
-    depends_on:
-      - backend
 
 networks:
   edufit-network:

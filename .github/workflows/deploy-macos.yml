@@ -1,5 +1,8 @@
 name: Deploy EduFit (macOS)
 
+# 2026-05-01: backend/frontend 운영 중지 (gateway 분리 + 데이터 활용도 낮음)
+# ai-crawler만 단독 배포. 재가동 필요시 docker compose --profile archived up -d 수동 실행.
+
 on:
   push:
     branches: [ "prod" ]
@@ -12,7 +15,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to OrbStack Docker
+    name: Deploy ai-crawler to OrbStack Docker
     runs-on: [self-hosted, macos, orbstack]
 
     env:
@@ -22,14 +25,8 @@ jobs:
       DB_NAME: ${{ secrets.DB_NAME }}
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_PORT: ${{ secrets.DB_PORT }}
-      CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
       NAVER_ID: ${{ secrets.NAVER_ID }}
       NAVER_PW: ${{ secrets.NAVER_PW }}
-      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-      SUPER_ADMIN_EMAILS: ${{ secrets.SUPER_ADMIN_EMAILS }}
-      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-      DEBUG: "false"
-      LOG_LEVEL: "INFO"
 
     steps:
     - name: Checkout code
@@ -43,26 +40,17 @@ jobs:
         DB_NAME=${{ secrets.DB_NAME }}
         DB_HOST=${{ secrets.DB_HOST }}
         DB_PORT=${{ secrets.DB_PORT }}
-        CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
         NAVER_ID=${{ secrets.NAVER_ID }}
         NAVER_PW=${{ secrets.NAVER_PW }}
-        SMTP_USER=${{ secrets.SMTP_USER }}
-        SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
-        GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-        SUPER_ADMIN_EMAILS=${{ secrets.SUPER_ADMIN_EMAILS }}
-        JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
         CRAWL_LIMIT=50
-        DEBUG=false
-        LOG_LEVEL=INFO
         ENVEOF
-        # Remove leading whitespace from heredoc
         sed -i '' 's/^[[:space:]]*//' .env
       shell: bash
 
-    - name: Stop existing containers
+    - name: Stop existing ai-crawler
       run: |
-        docker compose stop ai-crawler frontend backend 2>/dev/null || true
-        docker compose rm -f ai-crawler frontend backend 2>/dev/null || true
+        docker compose stop ai-crawler 2>/dev/null || true
+        docker compose rm -f ai-crawler 2>/dev/null || true
       shell: bash
 
     - name: Ensure shared PostgreSQL is running
@@ -81,61 +69,29 @@ jobs:
         done
       shell: bash
 
-    - name: Build and start services
+    - name: Build and start ai-crawler
       run: |
-        docker compose up -d --build backend frontend ai-crawler
+        docker compose up -d --build ai-crawler
       shell: bash
 
-    - name: Wait for backend health check
+    - name: Verify ai-crawler is running
       run: |
-        echo "Waiting for backend to be healthy..."
-        for i in $(seq 1 30); do
-          if curl -sf http://localhost:9070/api/health > /dev/null 2>&1; then
-            echo "Backend is healthy!"
-            break
-          fi
-          if [ $i -eq 30 ]; then
-            echo "Backend health check timeout"
-            docker compose logs backend --tail=50
-            exit 1
-          fi
-          sleep 2
-        done
-      shell: bash
-
-    - name: Verify frontend
-      run: |
-        echo "Waiting for frontend..."
-        for i in $(seq 1 15); do
-          if curl -sf http://localhost:4070/ > /dev/null 2>&1; then
-            echo "Frontend is serving!"
-            break
-          fi
-          if [ $i -eq 15 ]; then
-            echo "Frontend verification timeout"
-            docker compose logs frontend --tail=30
-            exit 1
-          fi
-          sleep 2
-        done
-      shell: bash
-
-    - name: Verify API through frontend proxy
-      run: |
-        RESPONSE=$(curl -sf http://localhost:4070/api/v1/academies 2>&1)
-        if [ $? -eq 0 ]; then
-          echo "API proxy verified successfully"
+        echo "Waiting for ai-crawler to start..."
+        sleep 5
+        if docker ps --format '{{.Names}}' | grep -q '^edufit-ai-crawler$'; then
+          echo "ai-crawler container is running"
+          docker compose logs ai-crawler --tail=30
         else
-          echo "Warning: API proxy check failed"
-          docker compose logs --tail=20
+          echo "ERROR: ai-crawler not running"
+          docker compose logs ai-crawler --tail=50
+          exit 1
         fi
       shell: bash
 
     - name: Deployment summary
       run: |
-        echo "=== EduFit Deployment Complete ==="
-        echo "Frontend: http://localhost:4070/"
-        echo "Backend:  http://localhost:9070"
+        echo "=== EduFit ai-crawler Deployment Complete ==="
+        echo "backend/frontend는 운영 중지 (archived profile)."
         echo ""
         docker compose ps
       shell: bash
