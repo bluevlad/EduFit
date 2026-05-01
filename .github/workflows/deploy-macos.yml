@@ -27,6 +27,12 @@ jobs:
       DB_PORT: ${{ secrets.DB_PORT }}
       NAVER_ID: ${{ secrets.NAVER_ID }}
       NAVER_PW: ${{ secrets.NAVER_PW }}
+      # backend/frontend 는 archived profile 이지만, docker compose interpolation 은
+      # profile 과 무관하게 모든 서비스를 검증하므로 필수 secrets 를 함께 노출.
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      SUPER_ADMIN_EMAILS: ${{ secrets.SUPER_ADMIN_EMAILS }}
 
     steps:
     - name: Checkout code
@@ -43,6 +49,11 @@ jobs:
         NAVER_ID=${{ secrets.NAVER_ID }}
         NAVER_PW=${{ secrets.NAVER_PW }}
         CRAWL_LIMIT=50
+        # archived profile 검증용 (backend/frontend 는 실행되지 않음)
+        JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+        CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
+        GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+        SUPER_ADMIN_EMAILS=${{ secrets.SUPER_ADMIN_EMAILS }}
         ENVEOF
         sed -i '' 's/^[[:space:]]*//' .env
       shell: bash
