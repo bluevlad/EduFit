@@ -1,80 +1,40 @@
-# EduFit
+# EduFit (아카이브 — 코드 보존)
 
-학원/강사 평판 분석 통합 플랫폼
+> **상태 (2026-06-06): 운영 종료 / 아카이브.**
+> 학원/강사 평판 분석 통합 플랫폼(AcademyInsight + TeacherHub 통합). 사용자 화면은
+> 2026-05-01, 백그라운드 수집기(ai-crawler)는 2026-06-06 운영 중지·컨테이너 제거되었습니다.
+> 본 repo 는 **구현 코드만** 보존하며, docker-compose·nginx·배포 워크플로우 등 운영/배포
+> 구성과 아키텍처 기록은 중앙 관제 repo 의 LEGACY 가이드로 이관했습니다.
+>
+> 📄 **운영/구성/종료 기록**: [Claude-Opus-bluevlad / services/edufit/LEGACY.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/services/edufit/LEGACY.md)
 
-## 개요
+## 무엇이었나
 
-EduFit은 AcademyInsight(Node.js+MongoDB)와 TeacherHub(Spring Boot+PostgreSQL+Python)의 데이터 수집/분석 기능을 통합한 학원/강사 평판 분석 플랫폼입니다.
-
-공무원 시험 학원 및 강사에 대한 온라인 커뮤니티 평판을 수집, 분석하여 수험생에게 유용한 인사이트를 제공합니다.
-
-## 기술 스택
+공무원 시험 학원·강사에 대한 온라인 커뮤니티(네이버 카페·디시인사이드) 평판을 수집·분석해
+일/주/월간 리포트로 집계하던 서비스. AcademyInsight(Node.js+MongoDB)와 TeacherHub
+(Spring Boot+Python)를 Python FastAPI 단일 스택으로 통합.
 
 | 구성요소 | 기술 |
 |----------|------|
-| Backend | Python FastAPI + SQLAlchemy 2.0 |
+| Backend | Python FastAPI + SQLAlchemy 2.0 + Alembic |
 | Frontend | React 18 (Vite) + MUI 5 |
 | Database | PostgreSQL 15 |
-| Migration | Alembic |
-| Container | Docker Compose |
+| Crawler | Playwright (Chromium headless) + APScheduler |
 
-## 빠른 시작
-
-### 1. 로컬 DB 실행
-
-```bash
-docker compose -f docker-compose.local.yml up -d
-```
-
-### 2. 백엔드 실행
-
-```bash
-cd backend
-py -m venv venv && venv\Scripts\activate
-pip install -r requirements.txt
-# .env.example을 .env로 복사 후 설정
-py -m uvicorn app.main:app --port 9070 --reload
-```
-
-### 3. 프론트엔드 실행
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### 4. 접속
-
-- Frontend: http://localhost:4070
-- Backend API: http://localhost:9070
-- Swagger UI: http://localhost:9070/docs
-
-## 프로젝트 구조
+## 코드 구조
 
 ```
 EduFit/
-├── backend/           # FastAPI 백엔드
-│   ├── app/
-│   │   ├── api/v1/    # API 엔드포인트
-│   │   ├── core/      # 설정, DB 연결
-│   │   ├── models/    # SQLAlchemy 모델
-│   │   ├── schemas/   # Pydantic 스키마
-│   │   └── services/  # 비즈니스 로직
-│   └── alembic/       # DB 마이그레이션
-├── frontend/          # React 프론트엔드
-│   └── src/
-│       ├── components/  # UI 컴포넌트
-│       ├── pages/       # 페이지
-│       └── services/    # API 클라이언트
-├── database/          # SQL 스키마 & 시드 데이터
-├── docs/              # 프로젝트 문서
-└── docker-compose.*   # Docker 설정
+├── backend/           # FastAPI 백엔드 (api/v1, core, models, schemas, services, alembic)
+├── frontend/          # React 프론트엔드 (components, pages, services)
+├── ai-crawler/        # 데이터 수집 엔진 (crawlers, services, scheduler)
+└── database/          # SQL 스키마 & 시드 데이터
 ```
 
-## 문서
+각 컴포넌트의 `Dockerfile` 은 빌드 참조용으로 유지됩니다. 서비스 토폴로지(docker-compose
+구성·포트·게이트웨이)는 위 LEGACY 가이드 §4 스냅샷을 참조하세요.
 
-- [개발 환경 설정](docs/dev/SETUP.md)
-- [API Changelog](docs/api/CHANGELOG.md)
-- [Architecture Decision Records](docs/adr/)
-- [로드맵](docs/roadmap/EDUFIT_ROADMAP.md)
+## 참고
+
+- 본 repo 는 더 이상 배포되지 않습니다 (deploy 워크플로우 제거, 컨테이너 제거).
+- 공유 PostgreSQL 의 `edufit` DB 는 보존(미 drop) 상태입니다.
