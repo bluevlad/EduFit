@@ -6,7 +6,7 @@
 > 본 repo 는 **구현 코드만** 보존하며, docker-compose·nginx·배포 워크플로우 등 운영/배포
 > 구성과 아키텍처 기록은 중앙 관제 repo 의 LEGACY 가이드로 이관했습니다.
 >
-> 📄 **운영/구성/종료 기록**: [Claude-Opus-bluevlad / services/edufit/LEGACY.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/services/edufit/LEGACY.md)
+> 📄 **운영/구성/종료 기록**: [Ai-Legacy-bluevlad / services/edufit/LEGACY.md](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/services/edufit/LEGACY.md)
 
 ## 무엇이었나
 
